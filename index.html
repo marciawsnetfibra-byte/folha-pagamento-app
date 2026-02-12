@@ -760,6 +760,14 @@
             height: 16px;
             margin: 0;
         }
+        .sync-status {
+            font-size: 11px;
+            padding: 2px 8px;
+            border-radius: 12px;
+            background-color: #f59e0b;
+            color: white;
+            margin-left: 8px;
+        }
     </style>
 </head>
 <body class="bg-gray-100 p-4">
@@ -1017,6 +1025,7 @@
                     <i class="fas fa-user-circle"></i>
                     <span id="userEmail"></span>
                     <span id="userRoleBadge" class="admin-badge" style="display: none;">Admin</span>
+                    <span id="syncStatusBadge" class="sync-status" style="display: none;">Sincronizando...</span>
                 </div>
             </div>
             <div class="menu-items">
@@ -1851,7 +1860,7 @@
 
     <script>
         // ============================================
-        // CONFIGURAÇÃO DO FIREBASE - CORRIGIDA PARA PERMISSÕES
+        // CONFIGURAÇÃO DO FIREBASE - VERSÃO OTIMIZADA
         // ============================================
         
         const firebaseConfig = {
@@ -1863,55 +1872,34 @@
             appId: "1:482792411975:web:c884c56ce5a38313d33262"
         };
 
-        // Inicialização do Firebase com tratamento de erros aprimorado
+        // Inicialização do Firebase com tratamento de erros robusto
+        let db, auth;
+        
         try {
             if (typeof firebase !== 'undefined') {
                 if (!firebase.apps || firebase.apps.length === 0) {
                     firebase.initializeApp(firebaseConfig);
                     console.log("✅ Firebase inicializado com sucesso!");
                 }
-            } else {
-                console.error("❌ Firebase SDK não carregado!");
-            }
-        } catch (error) {
-            console.error("❌ Erro ao inicializar Firebase:", error);
-        }
-
-        let db, auth;
-        try {
-            if (typeof firebase !== 'undefined') {
+                
                 db = firebase.firestore();
                 auth = firebase.auth();
                 
-                // Configurar Firestore para permitir acesso mesmo com regras restritivas
+                // Configurar Firestore para maior compatibilidade
                 try {
-                    db.settings({
-                        cacheSizeBytes: firebase.firestore.CACHE_SIZE_UNLIMITED,
-                        ignoreUndefinedProperties: true,
-                        merge: true
-                    });
-                    console.log("✅ Firestore configurado com cache ilimitado");
+                    // Desabilitar persistência para evitar problemas de cache
+                    // e garantir leitura/escrita sempre atualizadas
+                    console.log("✅ Firestore configurado para modo de compatibilidade");
                 } catch (settingsError) {
                     console.warn("⚠️ Erro ao configurar Firestore:", settingsError);
                 }
                 
-                // Ativar persistência offline
-                try {
-                    db.enablePersistence({ synchronizeTabs: true })
-                        .then(() => console.log("✅ Persistência offline ativada"))
-                        .catch((err) => {
-                            if (err.code === 'failed-precondition') {
-                                console.warn("⚠️ Persistência offline não disponível (múltiplas abas)");
-                            } else if (err.code === 'unimplemented') {
-                                console.warn("⚠️ Navegador não suporta persistência offline");
-                            }
-                        });
-                } catch (persistenceError) {
-                    console.warn("⚠️ Erro ao ativar persistência:", persistenceError);
-                }
+                console.log("✅ Firestore e Auth disponíveis");
+            } else {
+                console.error("❌ Firebase SDK não carregado!");
             }
         } catch (error) {
-            console.error("❌ Erro ao obter Firestore/Auth:", error);
+            console.error("❌ Erro crítico ao inicializar Firebase:", error);
         }
 
         // ============================================
@@ -1926,7 +1914,7 @@
         let currentCollaboratorStatus = 'active';
         let isAdmin = false;
         let adminUsers = {};
-        let firestoreInitialized = false;
+        let firestoreAvailable = false;
         
         // Configurações de porcentagens
         let heNormalPorcentagem = 50;
@@ -1948,6 +1936,12 @@
             total: true
         };
 
+        // Cache de dados do Firestore
+        let firestoreCache = {
+            users: null,
+            lastFetch: 0
+        };
+
         // ============================================
         // CHAVES DE ARMAZENAMENTO
         // ============================================
@@ -1956,6 +1950,7 @@
         const CALCULATIONS_STORAGE_KEY = 'folha_calculos_salvos';
         const DEPARTMENTS_STORAGE_KEY = 'folha_departamentos';
         const SETTINGS_STORAGE_KEY = 'folha_configuracoes';
+        const USERS_STORAGE_KEY = 'folha_usuarios_cache';
         
         const DEFAULT_DEPARTMENTS = [
             { id: 1, name: "Produção", active: true },
@@ -2066,12 +2061,48 @@
         }
 
         // ============================================
-        // FUNÇÕES DE ADMINISTRAÇÃO - CORRIGIDAS
+        // FUNÇÕES DE ADMINISTRAÇÃO - CORRIGIDAS E OTIMIZADAS
         // ============================================
         
         async function checkAdminStatus(user) {
-            if (!user || !db) {
-                console.log("❌ Sem usuário ou Firestore para verificar admin");
+            if (!user) {
+                console.log("❌ Sem usuário para verificar admin");
+                isAdmin = false;
+                document.getElementById('menuAdmin').style.display = 'none';
+                document.getElementById('userRoleBadge').style.display = 'none';
+                return;
+            }
+            
+            // Verificar se é o admin especial por email
+            if (user.email === 'marcia.wsnetfibra@gmail.com') {
+                console.log("👑 Admin especial detectado por email!");
+                isAdmin = true;
+                document.getElementById('menuAdmin').style.display = 'block';
+                document.getElementById('userRoleBadge').style.display = 'inline-block';
+                
+                // Tentar sincronizar com Firestore, mas manter admin local mesmo se falhar
+                if (db) {
+                    try {
+                        await db.collection('users').doc(user.uid).set({
+                            email: user.email,
+                            isAdmin: true,
+                            lastLogin: firebase.firestore.FieldValue.serverTimestamp(),
+                            isSpecialAdmin: true
+                        }, { merge: true });
+                        console.log("✅ Admin especial sincronizado com Firestore");
+                    } catch (error) {
+                        console.warn("⚠️ Não foi possível sincronizar admin especial:", error);
+                    }
+                }
+                
+                // Carregar lista de usuários
+                await loadAdminUsers();
+                return;
+            }
+            
+            // Para outros usuários, verificar normalmente
+            if (!db) {
+                console.warn("⚠️ Firestore não disponível, assumindo não-admin");
                 isAdmin = false;
                 document.getElementById('menuAdmin').style.display = 'none';
                 document.getElementById('userRoleBadge').style.display = 'none';
@@ -2095,7 +2126,7 @@
                         document.getElementById('userRoleBadge').style.display = 'none';
                     }
                     
-                    // Tentar carregar usuários mesmo se não for admin (apenas visualização)
+                    // Carregar lista de usuários
                     await loadAdminUsers();
                 } else {
                     console.log("ℹ️ Documento do usuário não existe, criando...");
@@ -2105,85 +2136,86 @@
                 }
             } catch (error) {
                 console.error("❌ Erro ao verificar status de admin:", error);
-                
-                // Se for o email especial, conceder admin mesmo com erro
-                if (user.email === 'marcia.wsnetfibra@gmail.com') {
-                    console.log("⭐ Concedendo admin especial para marcia.wsnetfibra@gmail.com (mesmo com erro)");
-                    isAdmin = true;
-                    document.getElementById('menuAdmin').style.display = 'block';
-                    document.getElementById('userRoleBadge').style.display = 'inline-block';
-                    
-                    // Tentar carregar usuários do localStorage como fallback
-                    showAdminUsersFallback();
-                } else {
-                    isAdmin = false;
-                    document.getElementById('menuAdmin').style.display = 'none';
-                    document.getElementById('userRoleBadge').style.display = 'none';
-                }
+                isAdmin = false;
+                document.getElementById('menuAdmin').style.display = 'none';
+                document.getElementById('userRoleBadge').style.display = 'none';
             }
         }
         
         async function loadAdminUsers() {
-            if (!db) {
-                console.error("❌ Firestore não disponível para carregar usuários");
-                showAdminUsersFallback();
+            const container = document.getElementById('adminUsersList');
+            
+            // Tentar carregar do cache primeiro
+            const cachedUsers = localStorage.getItem(USERS_STORAGE_KEY);
+            let usersList = [];
+            
+            try {
+                if (cachedUsers) {
+                    const cached = JSON.parse(cachedUsers);
+                    if (cached.timestamp && (Date.now() - cached.timestamp < 300000)) { // Cache por 5 minutos
+                        usersList = cached.users || [];
+                        console.log("📦 Usuários carregados do cache local");
+                    }
+                }
+            } catch (e) {
+                console.warn("⚠️ Erro ao ler cache de usuários:", e);
+            }
+            
+            // Se temos usuários no cache e não é admin, mostrar apenas o cache
+            if (usersList.length > 0 && !isAdmin) {
+                renderAdminUsersList(usersList);
                 return;
             }
             
-            try {
-                console.log("📥 Carregando lista de usuários do Firestore...");
-                const usersSnapshot = await db.collection('users').get();
-                adminUsers = {};
-                
-                const usersList = [];
-                
-                usersSnapshot.forEach(doc => {
-                    const userData = doc.data();
-                    adminUsers[doc.id] = userData;
+            // Tentar carregar do Firestore
+            if (db) {
+                try {
+                    console.log("📥 Carregando usuários do Firestore...");
+                    const usersSnapshot = await db.collection('users').get();
                     
-                    usersList.push({
-                        uid: doc.id,
-                        email: userData.email || 'Email não disponível',
-                        isAdmin: userData.isAdmin === true,
-                        createdAt: userData.createdAt ? new Date(userData.createdAt.seconds * 1000) : null,
-                        lastLogin: userData.lastLogin ? new Date(userData.lastLogin.seconds * 1000) : null
+                    usersList = [];
+                    usersSnapshot.forEach(doc => {
+                        const userData = doc.data();
+                        usersList.push({
+                            uid: doc.id,
+                            email: userData.email || 'Email não disponível',
+                            isAdmin: userData.isAdmin === true,
+                            createdAt: userData.createdAt ? new Date(userData.createdAt.seconds * 1000) : null,
+                            lastLogin: userData.lastLogin ? new Date(userData.lastLogin.seconds * 1000) : null
+                        });
                     });
-                });
-                
-                console.log(`✅ ${usersList.length} usuário(s) carregado(s) com sucesso`);
-                renderAdminUsersList(usersList);
-                
-            } catch (error) {
-                console.error("❌ Erro ao carregar usuários do Firestore:", error);
-                
-                // Fallback: mostrar apenas o usuário atual
-                showAdminUsersFallback();
+                    
+                    // Salvar no cache
+                    localStorage.setItem(USERS_STORAGE_KEY, JSON.stringify({
+                        users: usersList,
+                        timestamp: Date.now()
+                    }));
+                    
+                    console.log(`✅ ${usersList.length} usuário(s) carregados do Firestore`);
+                    
+                } catch (error) {
+                    console.error("❌ Erro ao carregar usuários do Firestore:", error);
+                    
+                    // Se não conseguiu carregar do Firestore mas temos cache, usar cache
+                    if (usersList.length > 0) {
+                        console.log("📦 Usando cache local de usuários");
+                    } else {
+                        // Fallback: mostrar pelo menos o usuário atual
+                        if (currentUser) {
+                            usersList = [{
+                                uid: currentUser.uid,
+                                email: currentUser.email,
+                                isAdmin: isAdmin,
+                                createdAt: new Date(),
+                                lastLogin: new Date()
+                            }];
+                        }
+                    }
+                }
             }
-        }
-        
-        function showAdminUsersFallback() {
-            console.log("🔄 Usando fallback: exibir apenas usuário atual");
             
-            if (currentUser) {
-                const usersList = [{
-                    uid: currentUser.uid,
-                    email: currentUser.email,
-                    isAdmin: isAdmin,
-                    createdAt: new Date(),
-                    lastLogin: new Date()
-                }];
-                
-                renderAdminUsersList(usersList);
-            } else {
-                document.getElementById('adminUsersList').innerHTML = `
-                    <div class="text-center py-4 text-orange-600">
-                        <i class="fas fa-exclamation-triangle fa-2x mb-3"></i>
-                        <p>Não foi possível carregar a lista de usuários.</p>
-                        <p class="text-xs mt-2">Você está no modo offline ou sem permissões.</p>
-                        <p class="text-xs">Apenas seu próprio acesso é exibido.</p>
-                    </div>
-                `;
-            }
+            // Renderizar a lista
+            renderAdminUsersList(usersList);
         }
         
         function renderAdminUsersList(users) {
@@ -2194,6 +2226,7 @@
                     <div class="text-center py-4 text-gray-500">
                         <i class="fas fa-users fa-3x mb-4"></i>
                         <p class="text-lg">Nenhum usuário encontrado.</p>
+                        <p class="text-sm mt-2">Faça login para sincronizar seus dados.</p>
                     </div>
                 `;
                 return;
@@ -2278,7 +2311,10 @@
                 });
                 
                 alert(`✅ Usuário ${email} agora é administrador!`);
-                loadAdminUsers();
+                
+                // Limpar cache para forçar recarregar
+                localStorage.removeItem(USERS_STORAGE_KEY);
+                await loadAdminUsers();
                 
             } catch (error) {
                 console.error("Erro ao tornar admin:", error);
@@ -2303,7 +2339,10 @@
                 });
                 
                 alert(`✅ Privilégios de administrador removidos de ${email}.`);
-                loadAdminUsers();
+                
+                // Limpar cache para forçar recarregar
+                localStorage.removeItem(USERS_STORAGE_KEY);
+                await loadAdminUsers();
                 
             } catch (error) {
                 console.error("Erro ao remover admin:", error);
@@ -2333,7 +2372,10 @@
                 
                 alert(`✅ Acesso do usuário ${email} excluído com sucesso!`);
                 closeDeleteUserModal();
-                loadAdminUsers();
+                
+                // Limpar cache para forçar recarregar
+                localStorage.removeItem(USERS_STORAGE_KEY);
+                await loadAdminUsers();
                 
             } catch (error) {
                 console.error("Erro ao excluir usuário:", error);
@@ -2349,11 +2391,8 @@
         function openAdminModal() {
             document.getElementById('adminModal').classList.add('active');
             
-            if (db && isAdmin) {
-                loadAdminUsers();
-            } else {
-                showAdminUsersFallback();
-            }
+            // Sempre recarregar a lista quando abrir o modal
+            loadAdminUsers();
         }
         
         function closeAdminModal() {
@@ -2365,49 +2404,23 @@
         // ============================================
         
         if (auth) {
-            auth.onAuthStateChanged((user) => {
+            auth.onAuthStateChanged(async (user) => {
                 updateAuthUI(user);
                 
                 if (user) {
                     currentUser = user;
                     isOnline = true;
                     
-                    // Verificar se é o usuário administrador especial
-                    if (user.email === 'marcia.wsnetfibra@gmail.com') {
-                        console.log("👑 Admin especial detectado. Concedendo acesso administrativo.");
-                        
-                        // Forçar admin para este email específico
-                        if (db) {
-                            db.collection('users').doc(user.uid).set({
-                                email: user.email,
-                                isAdmin: true,
-                                createdAt: firebase.firestore.FieldValue.serverTimestamp(),
-                                lastLogin: firebase.firestore.FieldValue.serverTimestamp(),
-                                isSpecialAdmin: true
-                            }, { merge: true }).then(() => {
-                                console.log("✅ Acesso administrativo concedido para marcia.wsnetfibra@gmail.com");
-                                checkAdminStatus(user);
-                            }).catch(error => {
-                                console.error("❌ Erro ao definir admin especial:", error);
-                                // Mesmo com erro, conceder admin localmente
-                                isAdmin = true;
-                                document.getElementById('menuAdmin').style.display = 'block';
-                                document.getElementById('userRoleBadge').style.display = 'inline-block';
-                                showAdminUsersFallback();
-                            });
-                        } else {
-                            // Firestore não disponível, conceder admin localmente
-                            isAdmin = true;
-                            document.getElementById('menuAdmin').style.display = 'block';
-                            document.getElementById('userRoleBadge').style.display = 'inline-block';
-                            showAdminUsersFallback();
-                        }
-                    } else {
-                        checkAdminStatus(user);
-                    }
+                    console.log("👤 Usuário logado:", user.email);
                     
-                    loadUserData();
+                    // Verificar status de admin (inclui lógica especial para admin)
+                    await checkAdminStatus(user);
+                    
+                    // Carregar dados do usuário
+                    await loadUserData();
+                    
                 } else {
+                    console.log("👤 Usuário desconectado");
                     currentUser = null;
                     isOnline = false;
                     userData = null;
@@ -2478,8 +2491,13 @@
             if (!currentUser || !db) return;
             
             try {
-                const usersSnapshot = await db.collection('users').get();
-                const isFirstUser = usersSnapshot.size === 0;
+                let isFirstUser = false;
+                try {
+                    const usersSnapshot = await db.collection('users').get();
+                    isFirstUser = usersSnapshot.size === 0;
+                } catch (error) {
+                    console.warn("⚠️ Erro ao verificar primeiro usuário:", error);
+                }
                 
                 // Verificar se é o email especial que deve ser admin
                 const shouldBeAdmin = isFirstUser || currentUser.email === 'marcia.wsnetfibra@gmail.com';
@@ -2495,7 +2513,7 @@
                     lastSync: firebase.firestore.FieldValue.serverTimestamp()
                 };
                 
-                await db.collection('users').doc(currentUser.uid).set(initialData);
+                await db.collection('users').doc(currentUser.uid).set(initialData, { merge: true });
                 userData = initialData;
                 console.log("✅ Dados iniciais criados no Firestore");
                 
@@ -2515,27 +2533,18 @@
             
             try {
                 const localDepartments = getDepartmentsFromStorage();
-                if (localDepartments.length > 0 && 
-                    (!userData.departments || userData.departments.length === 0)) {
+                if (localDepartments.length > 0) {
                     await updateFirebaseData('departments', localDepartments);
-                } else if (userData.departments && userData.departments.length > 0) {
-                    saveDepartmentsToStorage(userData.departments);
                 }
                 
                 const localCollaborators = getCollaboratorsFromStorage();
-                if (localCollaborators.length > 0 && 
-                    (!userData.collaborators || userData.collaborators.length === 0)) {
+                if (localCollaborators.length > 0) {
                     await updateFirebaseData('collaborators', localCollaborators);
-                } else if (userData.collaborators && userData.collaborators.length > 0) {
-                    saveCollaboratorsToStorage(userData.collaborators);
                 }
                 
                 const localCalculations = getCalculationsFromStorage();
-                if (localCalculations.length > 0 && 
-                    (!userData.calculations || userData.calculations.length === 0)) {
+                if (localCalculations.length > 0) {
                     await updateFirebaseData('calculations', localCalculations);
-                } else if (userData.calculations && userData.calculations.length > 0) {
-                    saveCalculationsToStorage(userData.calculations);
                 }
                 
                 console.log("✅ Sincronização concluída");
@@ -2556,7 +2565,9 @@
                     lastSync: firebase.firestore.FieldValue.serverTimestamp()
                 });
                 
-                userData[field] = data;
+                if (userData) {
+                    userData[field] = data;
+                }
                 console.log(`✅ ${field} atualizados no Firebase`);
                 
             } catch (error) {
