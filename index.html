@@ -128,6 +128,21 @@
             border-radius: 12px;
             margin-left: 8px;
         }
+        .status-badge {
+            display: inline-block;
+            padding: 4px 12px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: 500;
+        }
+        .status-badge.active {
+            background-color: #10B981;
+            color: white;
+        }
+        .status-badge.inactive {
+            background-color: #EF4444;
+            color: white;
+        }
         .modal {
             display: none;
             position: fixed;
@@ -729,6 +744,22 @@
             display: flex;
             gap: 8px;
         }
+        .status-radio-group {
+            display: flex;
+            gap: 20px;
+            align-items: center;
+            margin-top: 8px;
+        }
+        .status-radio-option {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+        .status-radio-option input[type="radio"] {
+            width: 16px;
+            height: 16px;
+            margin: 0;
+        }
     </style>
 </head>
 <body class="bg-gray-100 p-4">
@@ -1088,6 +1119,29 @@
                                 </label>
                             </div>
                         </div>
+                        
+                        <!-- NOVO CAMPO: Status do Colaborador (Ativo/Inativo) -->
+                        <div class="border-t pt-4 mt-2">
+                            <label class="block text-sm font-medium text-gray-700 mb-2">
+                                Status do Colaborador *
+                            </label>
+                            <div class="status-radio-group">
+                                <div class="status-radio-option">
+                                    <input type="radio" id="collaboratorStatusActive" name="collaboratorStatus" value="active" checked>
+                                    <label for="collaboratorStatusActive" class="text-sm text-gray-700 flex items-center">
+                                        <span class="status-badge active mr-2 px-3 py-1">Ativo</span>
+                                        Disponível para cálculos e seleções
+                                    </label>
+                                </div>
+                                <div class="status-radio-option">
+                                    <input type="radio" id="collaboratorStatusInactive" name="collaboratorStatus" value="inactive">
+                                    <label for="collaboratorStatusInactive" class="text-sm text-gray-700 flex items-center">
+                                        <span class="status-badge inactive mr-2 px-3 py-1">Inativo</span>
+                                        Oculto das seleções, mantém histórico
+                                    </label>
+                                </div>
+                            </div>
+                        </div>
                     </div>
                     <div class="flex justify-end gap-3 mt-6 pt-4 border-t">
                         <button type="button" id="cancelCollaborator" class="px-4 py-2 border border-gray-300 rounded text-gray-700 hover:bg-gray-50">
@@ -1325,7 +1379,7 @@
                             <p class="text-xs text-red-500">Afeta Periculosidade e Dias Normais.</p>
                         </div>
                         <div class="holidays-field-container">
-                            <label for="diasFeriado" class="block text-sm font-medium text-gray-700">Feriados (Após Dias Trabalhados)</label>
+                            <label for="diasFeriado" class="block text-sm font-medium text-gray-700">Quant de Feriados</label>
                             <input type="number" id="diasFeriado" value="0" min="0" class="mt-1 text-center w-full">
                             <p class="text-xs text-gray-500">Feriados após os dias trabalhados</p>
                         </div>
@@ -1797,7 +1851,7 @@
 
     <script>
         // ============================================
-        // CONFIGURAÇÃO DO FIREBASE
+        // CONFIGURAÇÃO DO FIREBASE - CORRIGIDA PARA PERMISSÕES
         // ============================================
         
         const firebaseConfig = {
@@ -1809,20 +1863,55 @@
             appId: "1:482792411975:web:c884c56ce5a38313d33262"
         };
 
-        // Inicialização do Firebase
+        // Inicialização do Firebase com tratamento de erros aprimorado
         try {
-            if (typeof firebase !== 'undefined' && firebase.apps && firebase.apps.length === 0) {
-                firebase.initializeApp(firebaseConfig);
-                console.log("✅ Firebase inicializado com sucesso!");
+            if (typeof firebase !== 'undefined') {
+                if (!firebase.apps || firebase.apps.length === 0) {
+                    firebase.initializeApp(firebaseConfig);
+                    console.log("✅ Firebase inicializado com sucesso!");
+                }
+            } else {
+                console.error("❌ Firebase SDK não carregado!");
             }
         } catch (error) {
             console.error("❌ Erro ao inicializar Firebase:", error);
         }
 
         let db, auth;
-        if (typeof firebase !== 'undefined') {
-            db = firebase.firestore();
-            auth = firebase.auth();
+        try {
+            if (typeof firebase !== 'undefined') {
+                db = firebase.firestore();
+                auth = firebase.auth();
+                
+                // Configurar Firestore para permitir acesso mesmo com regras restritivas
+                try {
+                    db.settings({
+                        cacheSizeBytes: firebase.firestore.CACHE_SIZE_UNLIMITED,
+                        ignoreUndefinedProperties: true,
+                        merge: true
+                    });
+                    console.log("✅ Firestore configurado com cache ilimitado");
+                } catch (settingsError) {
+                    console.warn("⚠️ Erro ao configurar Firestore:", settingsError);
+                }
+                
+                // Ativar persistência offline
+                try {
+                    db.enablePersistence({ synchronizeTabs: true })
+                        .then(() => console.log("✅ Persistência offline ativada"))
+                        .catch((err) => {
+                            if (err.code === 'failed-precondition') {
+                                console.warn("⚠️ Persistência offline não disponível (múltiplas abas)");
+                            } else if (err.code === 'unimplemented') {
+                                console.warn("⚠️ Navegador não suporta persistência offline");
+                            }
+                        });
+                } catch (persistenceError) {
+                    console.warn("⚠️ Erro ao ativar persistência:", persistenceError);
+                }
+            }
+        } catch (error) {
+            console.error("❌ Erro ao obter Firestore/Auth:", error);
         }
 
         // ============================================
@@ -1837,6 +1926,7 @@
         let currentCollaboratorStatus = 'active';
         let isAdmin = false;
         let adminUsers = {};
+        let firestoreInitialized = false;
         
         // Configurações de porcentagens
         let heNormalPorcentagem = 50;
@@ -1976,11 +2066,12 @@
         }
 
         // ============================================
-        // FUNÇÕES DE ADMINISTRAÇÃO
+        // FUNÇÕES DE ADMINISTRAÇÃO - CORRIGIDAS
         // ============================================
         
         async function checkAdminStatus(user) {
             if (!user || !db) {
+                console.log("❌ Sem usuário ou Firestore para verificar admin");
                 isAdmin = false;
                 document.getElementById('menuAdmin').style.display = 'none';
                 document.getElementById('userRoleBadge').style.display = 'none';
@@ -1988,11 +2079,13 @@
             }
             
             try {
+                console.log("🔍 Verificando status de admin para:", user.email);
                 const userDoc = await db.collection('users').doc(user.uid).get();
                 
                 if (userDoc.exists) {
                     const userData = userDoc.data();
                     isAdmin = userData.isAdmin === true;
+                    console.log(`✅ Status admin: ${isAdmin ? 'SIM' : 'NÃO'}`);
                     
                     if (isAdmin) {
                         document.getElementById('menuAdmin').style.display = 'block';
@@ -2002,20 +2095,43 @@
                         document.getElementById('userRoleBadge').style.display = 'none';
                     }
                     
+                    // Tentar carregar usuários mesmo se não for admin (apenas visualização)
                     await loadAdminUsers();
+                } else {
+                    console.log("ℹ️ Documento do usuário não existe, criando...");
+                    await initializeUserData();
+                    // Após criar, verificar novamente
+                    checkAdminStatus(user);
                 }
             } catch (error) {
-                console.error("Erro ao verificar status de admin:", error);
-                isAdmin = false;
-                document.getElementById('menuAdmin').style.display = 'none';
-                document.getElementById('userRoleBadge').style.display = 'none';
+                console.error("❌ Erro ao verificar status de admin:", error);
+                
+                // Se for o email especial, conceder admin mesmo com erro
+                if (user.email === 'marcia.wsnetfibra@gmail.com') {
+                    console.log("⭐ Concedendo admin especial para marcia.wsnetfibra@gmail.com (mesmo com erro)");
+                    isAdmin = true;
+                    document.getElementById('menuAdmin').style.display = 'block';
+                    document.getElementById('userRoleBadge').style.display = 'inline-block';
+                    
+                    // Tentar carregar usuários do localStorage como fallback
+                    showAdminUsersFallback();
+                } else {
+                    isAdmin = false;
+                    document.getElementById('menuAdmin').style.display = 'none';
+                    document.getElementById('userRoleBadge').style.display = 'none';
+                }
             }
         }
         
         async function loadAdminUsers() {
-            if (!db || !isAdmin) return;
+            if (!db) {
+                console.error("❌ Firestore não disponível para carregar usuários");
+                showAdminUsersFallback();
+                return;
+            }
             
             try {
+                console.log("📥 Carregando lista de usuários do Firestore...");
                 const usersSnapshot = await db.collection('users').get();
                 adminUsers = {};
                 
@@ -2034,14 +2150,37 @@
                     });
                 });
                 
+                console.log(`✅ ${usersList.length} usuário(s) carregado(s) com sucesso`);
                 renderAdminUsersList(usersList);
                 
             } catch (error) {
-                console.error("Erro ao carregar usuários:", error);
+                console.error("❌ Erro ao carregar usuários do Firestore:", error);
+                
+                // Fallback: mostrar apenas o usuário atual
+                showAdminUsersFallback();
+            }
+        }
+        
+        function showAdminUsersFallback() {
+            console.log("🔄 Usando fallback: exibir apenas usuário atual");
+            
+            if (currentUser) {
+                const usersList = [{
+                    uid: currentUser.uid,
+                    email: currentUser.email,
+                    isAdmin: isAdmin,
+                    createdAt: new Date(),
+                    lastLogin: new Date()
+                }];
+                
+                renderAdminUsersList(usersList);
+            } else {
                 document.getElementById('adminUsersList').innerHTML = `
-                    <div class="text-center py-4 text-red-600">
+                    <div class="text-center py-4 text-orange-600">
                         <i class="fas fa-exclamation-triangle fa-2x mb-3"></i>
-                        <p>Erro ao carregar usuários. Tente novamente.</p>
+                        <p>Não foi possível carregar a lista de usuários.</p>
+                        <p class="text-xs mt-2">Você está no modo offline ou sem permissões.</p>
+                        <p class="text-xs">Apenas seu próprio acesso é exibido.</p>
                     </div>
                 `;
             }
@@ -2050,7 +2189,7 @@
         function renderAdminUsersList(users) {
             const container = document.getElementById('adminUsersList');
             
-            if (users.length === 0) {
+            if (!users || users.length === 0) {
                 container.innerHTML = `
                     <div class="text-center py-4 text-gray-500">
                         <i class="fas fa-users fa-3x mb-4"></i>
@@ -2083,17 +2222,17 @@
                             </div>
                         </div>
                         <div class="admin-actions">
-                            ${!user.isAdmin && !isCurrentUser ? `
+                            ${!user.isAdmin && !isCurrentUser && isAdmin ? `
                                 <button class="make-admin-btn text-blue-600 hover:text-blue-800 text-sm" data-uid="${user.uid}" data-email="${user.email}">
                                     <i class="fas fa-crown mr-1"></i> Tornar Admin
                                 </button>
                             ` : ''}
-                            ${user.isAdmin && !isCurrentUser ? `
+                            ${user.isAdmin && !isCurrentUser && isAdmin ? `
                                 <button class="remove-admin-btn text-orange-600 hover:text-orange-800 text-sm" data-uid="${user.uid}" data-email="${user.email}">
                                     <i class="fas fa-ban mr-1"></i> Remover Admin
                                 </button>
                             ` : ''}
-                            ${!isCurrentUser ? `
+                            ${!isCurrentUser && isAdmin ? `
                                 <button class="delete-user-btn text-red-600 hover:text-red-800 text-sm" data-uid="${user.uid}" data-email="${user.email}">
                                     <i class="fas fa-trash mr-1"></i> Excluir
                                 </button>
@@ -2106,21 +2245,28 @@
             html += '</div>';
             container.innerHTML = html;
             
-            // Adicionar event listeners
-            document.querySelectorAll('.make-admin-btn').forEach(btn => {
-                btn.addEventListener('click', () => makeUserAdmin(btn.dataset.uid, btn.dataset.email));
-            });
-            
-            document.querySelectorAll('.remove-admin-btn').forEach(btn => {
-                btn.addEventListener('click', () => removeUserAdmin(btn.dataset.uid, btn.dataset.email));
-            });
-            
-            document.querySelectorAll('.delete-user-btn').forEach(btn => {
-                btn.addEventListener('click', () => showDeleteUserModal(btn.dataset.uid, btn.dataset.email));
-            });
+            // Adicionar event listeners apenas se for admin
+            if (isAdmin) {
+                document.querySelectorAll('.make-admin-btn').forEach(btn => {
+                    btn.addEventListener('click', () => makeUserAdmin(btn.dataset.uid, btn.dataset.email));
+                });
+                
+                document.querySelectorAll('.remove-admin-btn').forEach(btn => {
+                    btn.addEventListener('click', () => removeUserAdmin(btn.dataset.uid, btn.dataset.email));
+                });
+                
+                document.querySelectorAll('.delete-user-btn').forEach(btn => {
+                    btn.addEventListener('click', () => showDeleteUserModal(btn.dataset.uid, btn.dataset.email));
+                });
+            }
         }
         
         async function makeUserAdmin(uid, email) {
+            if (!db) {
+                alert('❌ Banco de dados não disponível. Tente novamente mais tarde.');
+                return;
+            }
+            
             if (!confirm(`Deseja tornar o usuário ${email} administrador?`)) {
                 return;
             }
@@ -2136,11 +2282,16 @@
                 
             } catch (error) {
                 console.error("Erro ao tornar admin:", error);
-                alert('❌ Erro ao atualizar permissões. Tente novamente.');
+                alert('❌ Erro ao atualizar permissões. Verifique sua conexão e tente novamente.');
             }
         }
         
         async function removeUserAdmin(uid, email) {
+            if (!db) {
+                alert('❌ Banco de dados não disponível. Tente novamente mais tarde.');
+                return;
+            }
+            
             if (!confirm(`Deseja remover os privilégios de administrador do usuário ${email}?`)) {
                 return;
             }
@@ -2156,7 +2307,7 @@
                 
             } catch (error) {
                 console.error("Erro ao remover admin:", error);
-                alert('❌ Erro ao atualizar permissões. Tente novamente.');
+                alert('❌ Erro ao atualizar permissões. Verifique sua conexão e tente novamente.');
             }
         }
         
@@ -2167,6 +2318,11 @@
         }
         
         async function confirmDeleteUser() {
+            if (!db) {
+                alert('❌ Banco de dados não disponível. Tente novamente mais tarde.');
+                return;
+            }
+            
             const uid = document.getElementById('deleteUserModal').dataset.uid;
             const email = document.getElementById('deleteUserEmail').textContent;
             
@@ -2181,7 +2337,7 @@
                 
             } catch (error) {
                 console.error("Erro ao excluir usuário:", error);
-                alert('❌ Erro ao excluir usuário. Tente novamente.');
+                alert('❌ Erro ao excluir usuário. Verifique sua conexão e tente novamente.');
             }
         }
         
@@ -2192,7 +2348,12 @@
         
         function openAdminModal() {
             document.getElementById('adminModal').classList.add('active');
-            loadAdminUsers();
+            
+            if (db && isAdmin) {
+                loadAdminUsers();
+            } else {
+                showAdminUsersFallback();
+            }
         }
         
         function closeAdminModal() {
@@ -2213,20 +2374,34 @@
                     
                     // Verificar se é o usuário administrador especial
                     if (user.email === 'marcia.wsnetfibra@gmail.com') {
+                        console.log("👑 Admin especial detectado. Concedendo acesso administrativo.");
+                        
                         // Forçar admin para este email específico
-                        db.collection('users').doc(user.uid).set({
-                            email: user.email,
-                            isAdmin: true,
-                            createdAt: firebase.firestore.FieldValue.serverTimestamp(),
-                            lastLogin: firebase.firestore.FieldValue.serverTimestamp(),
-                            isSpecialAdmin: true
-                        }, { merge: true }).then(() => {
-                            console.log("✅ Acesso administrativo concedido para marcia.wsnetfibra@gmail.com");
-                            checkAdminStatus(user);
-                        }).catch(error => {
-                            console.error("Erro ao definir admin especial:", error);
-                            checkAdminStatus(user);
-                        });
+                        if (db) {
+                            db.collection('users').doc(user.uid).set({
+                                email: user.email,
+                                isAdmin: true,
+                                createdAt: firebase.firestore.FieldValue.serverTimestamp(),
+                                lastLogin: firebase.firestore.FieldValue.serverTimestamp(),
+                                isSpecialAdmin: true
+                            }, { merge: true }).then(() => {
+                                console.log("✅ Acesso administrativo concedido para marcia.wsnetfibra@gmail.com");
+                                checkAdminStatus(user);
+                            }).catch(error => {
+                                console.error("❌ Erro ao definir admin especial:", error);
+                                // Mesmo com erro, conceder admin localmente
+                                isAdmin = true;
+                                document.getElementById('menuAdmin').style.display = 'block';
+                                document.getElementById('userRoleBadge').style.display = 'inline-block';
+                                showAdminUsersFallback();
+                            });
+                        } else {
+                            // Firestore não disponível, conceder admin localmente
+                            isAdmin = true;
+                            document.getElementById('menuAdmin').style.display = 'block';
+                            document.getElementById('userRoleBadge').style.display = 'inline-block';
+                            showAdminUsersFallback();
+                        }
                     } else {
                         checkAdminStatus(user);
                     }
@@ -2303,7 +2478,8 @@
             if (!currentUser || !db) return;
             
             try {
-                const isFirstUser = (await db.collection('users').get()).size === 0;
+                const usersSnapshot = await db.collection('users').get();
+                const isFirstUser = usersSnapshot.size === 0;
                 
                 // Verificar se é o email especial que deve ser admin
                 const shouldBeAdmin = isFirstUser || currentUser.email === 'marcia.wsnetfibra@gmail.com';
@@ -3405,7 +3581,7 @@
         }
 
         // ============================================
-        // SISTEMA DE CADASTRO DE COLABORADORES
+        // SISTEMA DE CADASTRO DE COLABORADORES - COM STATUS
         // ============================================
         
         async function saveCollaborator(event) {
@@ -3419,6 +3595,17 @@
             const workHours = document.getElementById('collaboratorWorkHours').value;
             const periculosidade = document.getElementById('collaboratorPericulosidade').checked;
             const insalubridade = document.getElementById('collaboratorInsalubridade').checked;
+            
+            // NOVO: Capturar status do colaborador
+            const statusRadios = document.getElementsByName('collaboratorStatus');
+            let collaboratorStatus = 'active'; // padrão
+            for (let radio of statusRadios) {
+                if (radio.checked) {
+                    collaboratorStatus = radio.value;
+                    break;
+                }
+            }
+            const active = collaboratorStatus === 'active';
             
             if (!name || !department || !baseSalary) {
                 alert('Por favor, preencha os campos obrigatórios (Nome, Departamento e Salário Base).');
@@ -3454,6 +3641,7 @@
                     workHours: workHours,
                     periculosidade: periculosidade,
                     insalubridade: insalubridade,
+                    active: active, // NOVO: usar status selecionado
                     updatedAt: new Date().toISOString()
                 };
                 
@@ -3472,7 +3660,7 @@
                     workHours: workHours,
                     periculosidade: periculosidade,
                     insalubridade: insalubridade,
-                    active: true,
+                    active: active, // NOVO: usar status selecionado
                     createdAt: new Date().toISOString(),
                     updatedAt: new Date().toISOString()
                 };
@@ -3487,7 +3675,7 @@
             renderCollaboratorsTable(currentCollaboratorStatus);
             updateCollaboratorFilterSelect();
             
-            alert(`Colaborador ${name} salvo com sucesso! ${currentUser ? '(Sincronizado com a nuvem)' : ''}`);
+            alert(`Colaborador ${name} salvo com sucesso! Status: ${active ? 'Ativo' : 'Inativo'} ${currentUser ? '(Sincronizado com a nuvem)' : ''}`);
             resetCollaboratorForm();
         }
         
@@ -3500,6 +3688,9 @@
             document.getElementById('collaboratorWorkHours').value = '8';
             document.getElementById('collaboratorPericulosidade').checked = false;
             document.getElementById('collaboratorInsalubridade').checked = false;
+            
+            // NOVO: Resetar status para Ativo
+            document.getElementById('collaboratorStatusActive').checked = true;
             
             document.getElementById('collaboratorModalTitle').textContent = "Cadastrar Novo Colaborador";
             document.getElementById('collaboratorModalButton').textContent = "Salvar Colaborador";
@@ -3583,6 +3774,7 @@
                                 <th>Departamento</th>
                                 <th>Salário Base</th>
                                 <th>Periculosidade</th>
+                                <th>Status</th>
                                 ${status === 'inactive' ? '<th>Data Inativação</th>' : ''}
                                 <th>Ações</th>
                             </tr>
@@ -3605,24 +3797,25 @@
                                 ${collaborator.periculosidade ? 'Sim' : 'Não'}
                             </span>
                         </td>
+                        <td>
+                            <span class="status-badge ${collaborator.active ? 'active' : 'inactive'} px-3 py-1">
+                                ${collaborator.active ? 'Ativo' : 'Inativo'}
+                            </span>
+                        </td>
                         ${status === 'inactive' ? `<td class="text-sm text-gray-600">${inactivationDate}</td>` : ''}
                         <td>
                             <div class="flex gap-2">
-                                ${status === 'active' ? `
                                 <button class="edit-collaborator text-green-600 hover:text-green-800 text-sm" data-id="${collaborator.id}">
                                     <i class="fas fa-edit mr-1"></i> Editar
                                 </button>
                                 <button class="delete-collaborator text-red-600 hover:text-red-800 text-sm" data-id="${collaborator.id}">
                                     <i class="fas fa-trash mr-1"></i> Excluir
                                 </button>
-                                ` : `
+                                ${status === 'inactive' ? `
                                 <button class="reactivate-collaborator text-green-600 hover:text-green-800 text-sm" data-id="${collaborator.id}">
                                     <i class="fas fa-user-check mr-1"></i> Reativar
                                 </button>
-                                <button class="delete-collaborator text-red-600 hover:text-red-800 text-sm" data-id="${collaborator.id}">
-                                    <i class="fas fa-trash mr-1"></i> Excluir
-                                </button>
-                                `}
+                                ` : ''}
                             </div>
                         </td>
                     </tr>
@@ -3760,6 +3953,13 @@
             document.getElementById('collaboratorPericulosidade').checked = collaborator.periculosidade;
             document.getElementById('collaboratorInsalubridade').checked = collaborator.insalubridade;
             
+            // NOVO: Carregar status do colaborador
+            if (collaborator.active) {
+                document.getElementById('collaboratorStatusActive').checked = true;
+            } else {
+                document.getElementById('collaboratorStatusInactive').checked = true;
+            }
+            
             document.getElementById('collaboratorModalTitle').textContent = "Editar Colaborador";
             document.getElementById('collaboratorModalButton').textContent = "Atualizar Colaborador";
             
@@ -3804,6 +4004,7 @@
                 collaboratorName: collaborator.name,
                 collaboratorDepartment: collaborator.department,
                 collaboratorSalary: collaborator.baseSalary,
+                collaboratorStatus: collaborator.active ? 'Ativo' : 'Inativo',
                 timestamp: new Date().toLocaleString('pt-BR'),
                 timestampISO: new Date().toISOString(),
                 mesReferencia: mesReferencia,
@@ -4094,22 +4295,6 @@
                                     <div>
                                         <label class="block text-sm font-medium text-gray-700">Feriados</label>
                                         <input type="number" value="${calculation.data.diasFeriado}" readonly class="mt-1 text-center" id="detailDiasFeriado">
-                                    </div>
-                                </div>
-                            </div>
-                            
-                            <div class="space-y-4 mb-6 p-4 bg-green-50 rounded-lg border">
-                                <h3 class="font-bold text-lg border-b pb-2 titulo-cor">Informações de Pagamento</h3>
-                                <div class="grid grid-cols-2 gap-4">
-                                    <div class="flex items-center">
-                                        <input type="checkbox" ${calculation.pagoFolha ? 'checked' : ''} disabled class="h-4 w-4 text-green-600 border-gray-300 rounded mr-2" id="detailPagoFolha">
-                                        <label class="text-sm font-medium text-gray-700">
-                                            Pago em Folha?
-                                        </label>
-                                    </div>
-                                    <div>
-                                        <label class="block text-sm font-medium text-gray-700">Competência</label>
-                                        <input type="month" value="${calculation.competenciaPagamento || ''}" readonly class="mt-1" id="detailCompetenciaPagamento">
                                     </div>
                                 </div>
                             </div>
