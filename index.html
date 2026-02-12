@@ -28,6 +28,8 @@
             --cor-menu-hover: #0d0066;
             --cor-importar: #10B981;
             --cor-importar-hover: #059669;
+            --cor-admin: #7C3AED;
+            --cor-admin-hover: #6D28D9;
         }
         .titulo-cor {
             color: var(--cor-titulo) !important;
@@ -100,6 +102,32 @@
             transform: translateY(-1px);
             box-shadow: 0 4px 6px rgba(16, 185, 129, 0.2);
         }
+        .btn-admin {
+            background-color: var(--cor-admin);
+            color: white;
+            border: none;
+            padding: 0.5rem 1rem;
+            border-radius: 6px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-weight: 500;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+        .btn-admin:hover {
+            background-color: var(--cor-admin-hover);
+            transform: translateY(-1px);
+            box-shadow: 0 4px 6px rgba(124, 58, 237, 0.2);
+        }
+        .admin-badge {
+            background-color: #7C3AED;
+            color: white;
+            font-size: 11px;
+            padding: 2px 8px;
+            border-radius: 12px;
+            margin-left: 8px;
+        }
         .modal {
             display: none;
             position: fixed;
@@ -159,7 +187,7 @@
             border-radius: 10px;
             box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
         }
-        input[type="text"], input[type="number"], select, input[type="month"], input[type="date"], input[type="file"] {
+        input[type="text"], input[type="number"], select, input[type="month"], input[type="date"], input[type="file"], input[type="password"], input[type="email"] {
             border: 1px solid #ccc;
             padding: 8px;
             border-radius: 6px;
@@ -168,12 +196,74 @@
             height: 40px !important;
             line-height: normal;
         }
-        #printButton, #clearButton, #saveButton, #loadDataButton, #exportDataButton {
+        .duplicate-notification {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            background-color: #FEF3C7;
+            border-left: 4px solid #F59E0B;
+            color: #92400E;
+            padding: 16px 20px;
+            border-radius: 8px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+            z-index: 9999;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            animation: slideIn 0.3s ease-out;
+            max-width: 400px;
+        }
+        .duplicate-notification i {
+            font-size: 20px;
+            color: #F59E0B;
+        }
+        .duplicate-notification .close-btn {
+            margin-left: auto;
+            cursor: pointer;
+            color: #6B7280;
+            background: none;
+            border: none;
+            font-size: 16px;
+        }
+        .duplicate-notification .close-btn:hover {
+            color: #374151;
+        }
+        @keyframes slideIn {
+            from {
+                transform: translateX(100%);
+                opacity: 0;
+            }
+            to {
+                transform: translateX(0);
+                opacity: 1;
+            }
+        }
+        .settings-panel {
+            background-color: #f9fafb;
+            border: 1px solid #e5e7eb;
+            border-radius: 8px;
+            padding: 20px;
+            margin-bottom: 20px;
+        }
+        .setting-item {
+            display: flex;
+            align-items: center;
+            gap: 20px;
+            margin-bottom: 15px;
+        }
+        .setting-item label {
+            min-width: 200px;
+            font-weight: 500;
+        }
+        .setting-item input {
+            max-width: 100px;
+        }
+        .printButton, #clearButton, #saveButton, #loadDataButton, #exportDataButton {
             color: var(--cor-titulo);
             border: 1px solid transparent;
             margin-left: 10px;
         }
-        #printButton:hover, #clearButton:hover, #saveButton:hover, #loadDataButton:hover, #exportDataButton:hover {
+        .printButton:hover, #clearButton:hover, #saveButton:hover, #loadDataButton:hover, #exportDataButton:hover {
              border: 1px solid var(--cor-titulo);
              background-color: #f0f4ff;
         }
@@ -225,12 +315,12 @@
         .delete-btn:hover {
             background-color: #fee2e2;
         }
-        .collaborator-table, .department-table, .history-table, .import-preview-table {
+        .collaborator-table, .department-table, .history-table, .import-preview-table, .admin-table {
             width: 100%;
             border-collapse: collapse;
             margin-top: 1rem;
         }
-        .collaborator-table th, .department-table th, .history-table th, .import-preview-table th {
+        .collaborator-table th, .department-table th, .history-table th, .import-preview-table th, .admin-table th {
             background-color: #f3f4f6;
             padding: 0.75rem;
             text-align: left;
@@ -238,11 +328,11 @@
             color: #374151;
             border-bottom: 2px solid #e5e7eb;
         }
-        .collaborator-table td, .department-table td, .history-table td, .import-preview-table td {
+        .collaborator-table td, .department-table td, .history-table td, .import-preview-table td, .admin-table td {
             padding: 0.75rem;
             border-bottom: 1px solid #e5e7eb;
         }
-        .collaborator-table tr:hover, .department-table tr:hover, .history-table tr:hover, .import-preview-table tr:hover {
+        .collaborator-table tr:hover, .department-table tr:hover, .history-table tr:hover, .import-preview-table tr:hover, .admin-table tr:hover {
             background-color: #f9fafb;
         }
         .department-badge {
@@ -594,6 +684,28 @@
             color: var(--cor-titulo);
             font-weight: 600;
         }
+        .admin-user-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 12px;
+            border-bottom: 1px solid #e5e7eb;
+        }
+        .admin-user-item:last-child {
+            border-bottom: none;
+        }
+        .admin-user-email {
+            font-weight: 500;
+            color: var(--cor-titulo);
+        }
+        .admin-user-date {
+            font-size: 12px;
+            color: #6b7280;
+        }
+        .admin-actions {
+            display: flex;
+            gap: 8px;
+        }
     </style>
 </head>
 <body class="bg-gray-100 p-4">
@@ -602,6 +714,101 @@
     <div id="firebaseStatus" class="firebase-status firebase-loading">
         <i class="fas fa-sync fa-spin"></i>
         <span>Conectando ao banco de dados...</span>
+    </div>
+
+    <!-- Notificação de Lançamento Duplicado -->
+    <div id="duplicateNotification" class="duplicate-notification" style="display: none;">
+        <i class="fas fa-exclamation-triangle"></i>
+        <div>
+            <strong>Lançamento duplicado!</strong>
+            <p id="duplicateMessage">Este cálculo já foi salvo anteriormente para este colaborador no mesmo mês.</p>
+        </div>
+        <button class="close-btn" onclick="document.getElementById('duplicateNotification').style.display='none'">
+            <i class="fas fa-times"></i>
+        </button>
+    </div>
+
+    <!-- Modal de Configurações -->
+    <div class="modal" id="settingsModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3 class="modal-title">
+                    <i class="fas fa-cog mr-2"></i>
+                    Configurações do Sistema
+                </h3>
+                <button class="modal-close" id="closeSettingsModal">&times;</button>
+            </div>
+            <div class="modal-body">
+                <div class="settings-panel">
+                    <h4 class="font-bold text-lg titulo-cor mb-4">Porcentagem de Horas Extras</h4>
+                    
+                    <div class="setting-item">
+                        <label for="heNormalPorcentagem">Hora Extra Normal (50%):</label>
+                        <input type="number" id="heNormalPorcentagem" min="0" max="200" value="50" step="1" class="w-24">
+                        <span class="ml-2">%</span>
+                    </div>
+                    
+                    <div class="setting-item">
+                        <label for="heSobreavisoPorcentagem">Sobreaviso Trabalhado (50%):</label>
+                        <input type="number" id="heSobreavisoPorcentagem" min="0" max="200" value="50" step="1" class="w-24">
+                        <span class="ml-2">%</span>
+                    </div>
+                    
+                    <div class="setting-item">
+                        <label for="adicionalNoturnoPorcentagem">Adicional Noturno (20%):</label>
+                        <input type="number" id="adicionalNoturnoPorcentagem" min="0" max="100" value="20" step="1" class="w-24">
+                        <span class="ml-2">%</span>
+                    </div>
+                    
+                    <div class="mt-6 pt-4 border-t flex justify-end">
+                        <button id="saveSettings" class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded">
+                            <i class="fas fa-save mr-2"></i>Salvar Configurações
+                        </button>
+                    </div>
+                </div>
+                
+                <div class="info-box">
+                    <i class="fas fa-info-circle mr-2"></i>
+                    As alterações nas porcentagens afetarão todos os novos cálculos realizados.
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal de Administração -->
+    <div class="modal" id="adminModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3 class="modal-title">
+                    <i class="fas fa-shield-alt mr-2"></i>
+                    Administração de Acessos
+                </h3>
+                <button class="modal-close" id="closeAdminModal">&times;</button>
+            </div>
+            <div class="modal-body">
+                <div class="mb-6">
+                    <h4 class="font-bold text-lg titulo-cor mb-3">Usuários do Sistema</h4>
+                    <p class="text-sm text-gray-600 mb-4">Apenas administradores podem gerenciar outros usuários.</p>
+                    
+                    <div id="adminUsersList">
+                        <div class="text-center py-4 text-gray-500">
+                            <i class="fas fa-sync fa-spin fa-2x mb-3"></i>
+                            <p>Carregando usuários...</p>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="mt-6 pt-4 border-t">
+                    <div class="flex justify-between items-center">
+                        <div>
+                            <h5 class="font-bold">Informações de Administrador</h5>
+                            <p class="text-xs text-gray-500 mt-1">Usuários com perfil administrador podem gerenciar acessos e excluir outros usuários.</p>
+                        </div>
+                        <span class="admin-badge text-sm px-3 py-1">Administrador</span>
+                    </div>
+                </div>
+            </div>
+        </div>
     </div>
 
     <!-- Modal de Login -->
@@ -755,6 +962,7 @@
                 <div id="userInfo" class="user-info">
                     <i class="fas fa-user-circle"></i>
                     <span id="userEmail"></span>
+                    <span id="userRoleBadge" class="admin-badge" style="display: none;">Admin</span>
                 </div>
             </div>
             <div class="menu-items">
@@ -769,6 +977,12 @@
                 </button>
                 <button class="menu-button" id="menuReports">
                     <i class="fas fa-chart-bar"></i> Relatórios
+                </button>
+                <button class="menu-button" id="menuSettings">
+                    <i class="fas fa-cog"></i> Configurações
+                </button>
+                <button class="menu-button btn-admin" id="menuAdmin" style="display: none;">
+                    <i class="fas fa-shield-alt"></i> Administração
                 </button>
                 <button class="menu-button" id="btnLogout" style="display: none;">
                     <i class="fas fa-sign-out-alt"></i> Sair
@@ -933,6 +1147,66 @@
         </div>
     </div>
 
+    <!-- MODAL DE EXCLUSÃO DE COLABORADOR (CONFIRMAÇÃO) -->
+    <div class="modal" id="deleteCollaboratorModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3 class="modal-title">
+                    <i class="fas fa-exclamation-triangle text-red-600 mr-2"></i>
+                    Confirmar Exclusão
+                </h3>
+                <button class="modal-close" id="closeDeleteModal">&times;</button>
+            </div>
+            <div class="modal-body">
+                <div class="text-center py-4">
+                    <i class="fas fa-user-slash text-red-600 text-5xl mb-4"></i>
+                    <h4 class="text-xl font-bold text-gray-800 mb-2" id="deleteCollaboratorName"></h4>
+                    <p class="text-gray-600 mb-6">Tem certeza que deseja excluir permanentemente este colaborador?</p>
+                    <p class="text-sm text-red-600 mb-6">Esta ação não pode ser desfeita. O colaborador será removido permanentemente do sistema e todos os cálculos históricos serão perdidos.</p>
+                    
+                    <div class="flex justify-center gap-4">
+                        <button id="cancelDeleteCollaborator" class="px-4 py-2 border border-gray-300 rounded text-gray-700 hover:bg-gray-50">
+                            Cancelar
+                        </button>
+                        <button id="confirmDeleteCollaborator" class="px-4 py-2 bg-red-600 text-white rounded hover:bg-red-700">
+                            <i class="fas fa-trash mr-2"></i>Excluir Permanentemente
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- MODAL DE EXCLUSÃO DE ACESSO (ADMIN) -->
+    <div class="modal" id="deleteUserModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3 class="modal-title">
+                    <i class="fas fa-exclamation-triangle text-red-600 mr-2"></i>
+                    Confirmar Exclusão de Acesso
+                </h3>
+                <button class="modal-close" id="closeDeleteUserModal">&times;</button>
+            </div>
+            <div class="modal-body">
+                <div class="text-center py-4">
+                    <i class="fas fa-user-minus text-red-600 text-5xl mb-4"></i>
+                    <h4 class="text-xl font-bold text-gray-800 mb-2" id="deleteUserEmail"></h4>
+                    <p class="text-gray-600 mb-6">Tem certeza que deseja excluir o acesso deste usuário?</p>
+                    <p class="text-sm text-red-600 mb-6">Esta ação não pode ser desfeita. O usuário perderá todo o acesso ao sistema e seus dados serão removidos.</p>
+                    
+                    <div class="flex justify-center gap-4">
+                        <button id="cancelDeleteUser" class="px-4 py-2 border border-gray-300 rounded text-gray-700 hover:bg-gray-50">
+                            Cancelar
+                        </button>
+                        <button id="confirmDeleteUser" class="px-4 py-2 bg-red-600 text-white rounded hover:bg-red-700">
+                            <i class="fas fa-trash mr-2"></i>Excluir Acesso
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <!-- CONTEÚDO PRINCIPAL (CALCULADORA) -->
     <div class="container" id="calculatorContent">
         <h1 class="text-3xl font-bold titulo-cor text-center mb-6 border-b pb-2">
@@ -1074,17 +1348,17 @@
                     </div>
 
                     <div class="flex justify-between text-sm">
-                        <span>Horas de Sobreaviso Trabalhado (50%):</span>
+                        <span>Horas de Sobreaviso Trabalhado (<span id="heSobreavisoPorcentagemDisplay">50</span>%):</span>
                         <span id="valorHoraExtraTrabalho50" class="titulo-cor">R$ 0,00</span>
                     </div>
                     
                     <div class="flex justify-between text-sm">
-                        <span>Horas Extras 50% (Normal):</span>
+                        <span>Horas Extras <span id="heNormalPorcentagemDisplay">50</span>% (Normal):</span>
                         <span id="valorHoraExtraTrabalho100" class="titulo-cor">R$ 0,00</span>
                     </div>
                     
                     <div class="flex justify-between text-sm">
-                        <span>Horas de Adicional Noturno:</span>
+                        <span>Horas de Adicional Noturno (<span id="adicionalNoturnoPorcentagemDisplay">20</span>%):</span>
                         <span id="valorAdicionalNoturno" class="titulo-cor">R$ 0,00</span>
                     </div>
                 </div>
@@ -1099,17 +1373,17 @@
                     </div>
                     
                     <div class="flex justify-between text-sm">
-                        <span>Reflexo Sob. Trabalhado DSR (HE 50%):</span>
+                        <span>Reflexo Sob. Trabalhado DSR (HE <span id="heSobreavisoPorcentagemReflexoDisplay">50</span>%):</span>
                         <span id="valorReflexoSobreavisoTrabalhado" class="text-indigo-700 font-semibold">R$ 0,00</span>
                     </div>
                     
                     <div class="flex justify-between text-sm">
-                        <span>Reflexo Horas Extras DSR (Normal 50%):</span>
+                        <span>Reflexo Horas Extras DSR (Normal <span id="heNormalPorcentagemReflexoDisplay">50</span>%):</span>
                         <span id="valorReflexoHorasExtrasNormal" class="text-indigo-700 font-semibold">R$ 0,00</span>
                     </div>
                     
                     <div class="flex justify-between text-sm">
-                        <span>Reflexo Adic. Noturno DSR:</span>
+                        <span>Reflexo Adic. Noturno DSR (<span id="adicionalNoturnoPorcentagemReflexoDisplay">20</span>%):</span>
                         <span id="valorReflexoAdicionalNoturno" class="text-indigo-700 font-semibold">R$ 0,00</span>
                     </div>
 
@@ -1156,7 +1430,7 @@
                             <span id="baseHePeric" class="font-semibold titulo-cor">R$ 0,00</span>
                         </div>
                         <div class="flex justify-between text-sm">
-                            <span>Hora Extra (50% c/ Peric.):</span>
+                            <span>Hora Extra (<span id="heNormalPorcentagemBaseDisplay">50</span>% c/ Peric.):</span>
                             <span id="horaExtra50" class="font-semibold titulo-cor">R$ 0,00</span>
                         </div>
                     </div>
@@ -1259,7 +1533,7 @@
         </div>
     </div>
 
-    <!-- CONTEÚDO DE HISTÓRICO DE CÁLCULOS - SIMPLIFICADO -->
+    <!-- CONTEÚDO DE HISTÓRICO DE CÁLCULOS -->
     <div class="container hidden" id="historyContent">
         <h1 class="text-3xl font-bold titulo-cor text-center mb-6 border-b pb-2">
             <i class="fas fa-history mr-2"></i> Histórico de Cálculos
@@ -1338,7 +1612,7 @@
         </div>
     </div>
 
-    <!-- NOVA ABA: RELATÓRIOS SIMPLIFICADA -->
+    <!-- ABA DE RELATÓRIOS -->
     <div class="container hidden" id="reportsContent">
         <h1 class="text-3xl font-bold titulo-cor text-center mb-6 border-b pb-2">
             <i class="fas fa-chart-bar mr-2"></i> Relatórios de Cálculos
@@ -1492,10 +1766,9 @@
 
     <script>
         // ============================================
-        // CONFIGURAÇÃO DO FIREBASE - NOVA CONFIGURAÇÃO
+        // CONFIGURAÇÃO DO FIREBASE
         // ============================================
         
-        // Configuração do Firebase para o projeto "folha-pagamento-app"
         const firebaseConfig = {
             apiKey: "AIzaSyBLgg6ICkkRMQimDU81tls9dxiNu-ubL1s",
             authDomain: "folha-pagamento-app.firebaseapp.com",
@@ -1521,12 +1794,23 @@
             auth = firebase.auth();
         }
 
-        // Variáveis globais
+        // ============================================
+        // VARIÁVEIS GLOBAIS
+        // ============================================
+        
         let currentUser = null;
         let isOnline = false;
         let userData = null;
         let currentCalculationDetailId = null;
         let importData = null;
+        let currentCollaboratorStatus = 'active';
+        let isAdmin = false;
+        let adminUsers = {};
+        
+        // Configurações de porcentagens
+        let heNormalPorcentagem = 50;
+        let heSobreavisoPorcentagem = 50;
+        let adicionalNoturnoPorcentagem = 20;
         
         // Variáveis para relatórios
         let activeReportFilters = {};
@@ -1544,12 +1828,354 @@
         };
 
         // ============================================
+        // CHAVES DE ARMAZENAMENTO
+        // ============================================
+        
+        const COLLABORATORS_STORAGE_KEY = 'folha_colaboradores_cadastrados';
+        const CALCULATIONS_STORAGE_KEY = 'folha_calculos_salvos';
+        const DEPARTMENTS_STORAGE_KEY = 'folha_departamentos';
+        const SETTINGS_STORAGE_KEY = 'folha_configuracoes';
+        
+        const DEFAULT_DEPARTMENTS = [
+            { id: 1, name: "Produção", active: true },
+            { id: 2, name: "Manutenção", active: true },
+            { id: 3, name: "Administrativo", active: true },
+            { id: 4, name: "RH", active: true },
+            { id: 5, name: "Financeiro", active: true },
+            { id: 6, name: "TI", active: true },
+            { id: 7, name: "Comercial", active: true },
+            { id: 8, name: "Logística", active: true },
+            { id: 9, name: "Qualidade", active: true },
+            { id: 10, name: "Segurança", active: true }
+        ];
+
+        // ============================================
+        // FORMATAÇÃO DE MOEDA
+        // ============================================
+        
+        const R$ = new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' });
+
+        // ============================================
+        // FUNÇÕES DE CONFIGURAÇÕES
+        // ============================================
+        
+        function loadSettings() {
+            const savedSettings = localStorage.getItem(SETTINGS_STORAGE_KEY);
+            
+            if (savedSettings) {
+                try {
+                    const settings = JSON.parse(savedSettings);
+                    heNormalPorcentagem = settings.heNormalPorcentagem || 50;
+                    heSobreavisoPorcentagem = settings.heSobreavisoPorcentagem || 50;
+                    adicionalNoturnoPorcentagem = settings.adicionalNoturnoPorcentagem || 20;
+                } catch (e) {
+                    console.error("Erro ao carregar configurações:", e);
+                }
+            }
+            
+            // Atualizar campos de configuração
+            const heNormalInput = document.getElementById('heNormalPorcentagem');
+            const heSobreavisoInput = document.getElementById('heSobreavisoPorcentagem');
+            const adicionalNoturnoInput = document.getElementById('adicionalNoturnoPorcentagem');
+            
+            if (heNormalInput) heNormalInput.value = heNormalPorcentagem;
+            if (heSobreavisoInput) heSobreavisoInput.value = heSobreavisoPorcentagem;
+            if (adicionalNoturnoInput) adicionalNoturnoInput.value = adicionalNoturnoPorcentagem;
+            
+            // Atualizar displays
+            updatePercentageDisplays();
+        }
+        
+        function saveSettings() {
+            const heNormalInput = document.getElementById('heNormalPorcentagem');
+            const heSobreavisoInput = document.getElementById('heSobreavisoPorcentagem');
+            const adicionalNoturnoInput = document.getElementById('adicionalNoturnoPorcentagem');
+            
+            heNormalPorcentagem = parseInt(heNormalInput.value) || 50;
+            heSobreavisoPorcentagem = parseInt(heSobreavisoInput.value) || 50;
+            adicionalNoturnoPorcentagem = parseInt(adicionalNoturnoInput.value) || 20;
+            
+            const settings = {
+                heNormalPorcentagem,
+                heSobreavisoPorcentagem,
+                adicionalNoturnoPorcentagem,
+                updatedAt: new Date().toISOString()
+            };
+            
+            localStorage.setItem(SETTINGS_STORAGE_KEY, JSON.stringify(settings));
+            
+            updatePercentageDisplays();
+            calcular();
+            
+            alert('Configurações salvas com sucesso!');
+            closeSettingsModal();
+        }
+        
+        function updatePercentageDisplays() {
+            const displays = [
+                'heNormalPorcentagemDisplay',
+                'heSobreavisoPorcentagemDisplay',
+                'adicionalNoturnoPorcentagemDisplay',
+                'heNormalPorcentagemReflexoDisplay',
+                'heSobreavisoPorcentagemReflexoDisplay',
+                'adicionalNoturnoPorcentagemReflexoDisplay',
+                'heNormalPorcentagemBaseDisplay'
+            ];
+            
+            displays.forEach(id => {
+                const element = document.getElementById(id);
+                if (element) {
+                    if (id.includes('Normal')) {
+                        element.textContent = heNormalPorcentagem;
+                    } else if (id.includes('Sobreaviso')) {
+                        element.textContent = heSobreavisoPorcentagem;
+                    } else if (id.includes('Noturno')) {
+                        element.textContent = adicionalNoturnoPorcentagem;
+                    }
+                }
+            });
+        }
+        
+        function openSettingsModal() {
+            document.getElementById('settingsModal').classList.add('active');
+        }
+        
+        function closeSettingsModal() {
+            document.getElementById('settingsModal').classList.remove('active');
+        }
+
+        // ============================================
+        // FUNÇÕES DE ADMINISTRAÇÃO
+        // ============================================
+        
+        async function checkAdminStatus(user) {
+            if (!user || !db) {
+                isAdmin = false;
+                document.getElementById('menuAdmin').style.display = 'none';
+                document.getElementById('userRoleBadge').style.display = 'none';
+                return;
+            }
+            
+            try {
+                const userDoc = await db.collection('users').doc(user.uid).get();
+                
+                if (userDoc.exists) {
+                    const userData = userDoc.data();
+                    isAdmin = userData.isAdmin === true;
+                    
+                    if (isAdmin) {
+                        document.getElementById('menuAdmin').style.display = 'block';
+                        document.getElementById('userRoleBadge').style.display = 'inline-block';
+                    } else {
+                        document.getElementById('menuAdmin').style.display = 'none';
+                        document.getElementById('userRoleBadge').style.display = 'none';
+                    }
+                    
+                    await loadAdminUsers();
+                }
+            } catch (error) {
+                console.error("Erro ao verificar status de admin:", error);
+                isAdmin = false;
+                document.getElementById('menuAdmin').style.display = 'none';
+                document.getElementById('userRoleBadge').style.display = 'none';
+            }
+        }
+        
+        async function loadAdminUsers() {
+            if (!db || !isAdmin) return;
+            
+            try {
+                const usersSnapshot = await db.collection('users').get();
+                adminUsers = {};
+                
+                const usersList = [];
+                
+                usersSnapshot.forEach(doc => {
+                    const userData = doc.data();
+                    adminUsers[doc.id] = userData;
+                    
+                    usersList.push({
+                        uid: doc.id,
+                        email: userData.email || 'Email não disponível',
+                        isAdmin: userData.isAdmin === true,
+                        createdAt: userData.createdAt ? new Date(userData.createdAt.seconds * 1000) : null,
+                        lastLogin: userData.lastLogin ? new Date(userData.lastLogin.seconds * 1000) : null
+                    });
+                });
+                
+                renderAdminUsersList(usersList);
+                
+            } catch (error) {
+                console.error("Erro ao carregar usuários:", error);
+                document.getElementById('adminUsersList').innerHTML = `
+                    <div class="text-center py-4 text-red-600">
+                        <i class="fas fa-exclamation-triangle fa-2x mb-3"></i>
+                        <p>Erro ao carregar usuários. Tente novamente.</p>
+                    </div>
+                `;
+            }
+        }
+        
+        function renderAdminUsersList(users) {
+            const container = document.getElementById('adminUsersList');
+            
+            if (users.length === 0) {
+                container.innerHTML = `
+                    <div class="text-center py-4 text-gray-500">
+                        <i class="fas fa-users fa-3x mb-4"></i>
+                        <p class="text-lg">Nenhum usuário encontrado.</p>
+                    </div>
+                `;
+                return;
+            }
+            
+            // Ordenar por email (ordem alfabética)
+            users.sort((a, b) => a.email.localeCompare(b.email));
+            
+            let html = '<div class="space-y-2">';
+            
+            users.forEach(user => {
+                const isCurrentUser = currentUser && user.uid === currentUser.uid;
+                const createdAtStr = user.createdAt ? user.createdAt.toLocaleDateString('pt-BR') : 'Data desconhecida';
+                const lastLoginStr = user.lastLogin ? user.lastLogin.toLocaleDateString('pt-BR') : 'Nunca acessou';
+                
+                html += `
+                    <div class="admin-user-item">
+                        <div>
+                            <div class="admin-user-email">
+                                ${user.email}
+                                ${user.isAdmin ? '<span class="admin-badge ml-2 text-xs">Admin</span>' : ''}
+                                ${isCurrentUser ? '<span class="bg-blue-100 text-blue-800 text-xs px-2 py-1 rounded ml-2">Você</span>' : ''}
+                            </div>
+                            <div class="admin-user-date">
+                                Cadastro: ${createdAtStr} | Último acesso: ${lastLoginStr}
+                            </div>
+                        </div>
+                        <div class="admin-actions">
+                            ${!user.isAdmin && !isCurrentUser ? `
+                                <button class="make-admin-btn text-blue-600 hover:text-blue-800 text-sm" data-uid="${user.uid}" data-email="${user.email}">
+                                    <i class="fas fa-crown mr-1"></i> Tornar Admin
+                                </button>
+                            ` : ''}
+                            ${user.isAdmin && !isCurrentUser ? `
+                                <button class="remove-admin-btn text-orange-600 hover:text-orange-800 text-sm" data-uid="${user.uid}" data-email="${user.email}">
+                                    <i class="fas fa-ban mr-1"></i> Remover Admin
+                                </button>
+                            ` : ''}
+                            ${!isCurrentUser ? `
+                                <button class="delete-user-btn text-red-600 hover:text-red-800 text-sm" data-uid="${user.uid}" data-email="${user.email}">
+                                    <i class="fas fa-trash mr-1"></i> Excluir
+                                </button>
+                            ` : ''}
+                        </div>
+                    </div>
+                `;
+            });
+            
+            html += '</div>';
+            container.innerHTML = html;
+            
+            // Adicionar event listeners
+            document.querySelectorAll('.make-admin-btn').forEach(btn => {
+                btn.addEventListener('click', () => makeUserAdmin(btn.dataset.uid, btn.dataset.email));
+            });
+            
+            document.querySelectorAll('.remove-admin-btn').forEach(btn => {
+                btn.addEventListener('click', () => removeUserAdmin(btn.dataset.uid, btn.dataset.email));
+            });
+            
+            document.querySelectorAll('.delete-user-btn').forEach(btn => {
+                btn.addEventListener('click', () => showDeleteUserModal(btn.dataset.uid, btn.dataset.email));
+            });
+        }
+        
+        async function makeUserAdmin(uid, email) {
+            if (!confirm(`Deseja tornar o usuário ${email} administrador?`)) {
+                return;
+            }
+            
+            try {
+                await db.collection('users').doc(uid).update({
+                    isAdmin: true,
+                    updatedAt: firebase.firestore.FieldValue.serverTimestamp()
+                });
+                
+                alert(`✅ Usuário ${email} agora é administrador!`);
+                loadAdminUsers();
+                
+            } catch (error) {
+                console.error("Erro ao tornar admin:", error);
+                alert('❌ Erro ao atualizar permissões. Tente novamente.');
+            }
+        }
+        
+        async function removeUserAdmin(uid, email) {
+            if (!confirm(`Deseja remover os privilégios de administrador do usuário ${email}?`)) {
+                return;
+            }
+            
+            try {
+                await db.collection('users').doc(uid).update({
+                    isAdmin: false,
+                    updatedAt: firebase.firestore.FieldValue.serverTimestamp()
+                });
+                
+                alert(`✅ Privilégios de administrador removidos de ${email}.`);
+                loadAdminUsers();
+                
+            } catch (error) {
+                console.error("Erro ao remover admin:", error);
+                alert('❌ Erro ao atualizar permissões. Tente novamente.');
+            }
+        }
+        
+        function showDeleteUserModal(uid, email) {
+            document.getElementById('deleteUserEmail').textContent = email;
+            document.getElementById('deleteUserModal').dataset.uid = uid;
+            document.getElementById('deleteUserModal').classList.add('active');
+        }
+        
+        async function confirmDeleteUser() {
+            const uid = document.getElementById('deleteUserModal').dataset.uid;
+            const email = document.getElementById('deleteUserEmail').textContent;
+            
+            if (!uid) return;
+            
+            try {
+                await db.collection('users').doc(uid).delete();
+                
+                alert(`✅ Acesso do usuário ${email} excluído com sucesso!`);
+                closeDeleteUserModal();
+                loadAdminUsers();
+                
+            } catch (error) {
+                console.error("Erro ao excluir usuário:", error);
+                alert('❌ Erro ao excluir usuário. Tente novamente.');
+            }
+        }
+        
+        function closeDeleteUserModal() {
+            document.getElementById('deleteUserModal').classList.remove('active');
+            document.getElementById('deleteUserModal').dataset.uid = '';
+        }
+        
+        function openAdminModal() {
+            document.getElementById('adminModal').classList.add('active');
+            loadAdminUsers();
+        }
+        
+        function closeAdminModal() {
+            document.getElementById('adminModal').classList.remove('active');
+        }
+
+        // ============================================
         // FUNÇÕES DE AUTENTICAÇÃO FIREBASE
         // ============================================
         
         if (auth) {
             auth.onAuthStateChanged((user) => {
                 updateAuthUI(user);
+                checkAdminStatus(user);
                 
                 if (user) {
                     currentUser = user;
@@ -1559,6 +2185,9 @@
                     currentUser = null;
                     isOnline = false;
                     userData = null;
+                    isAdmin = false;
+                    document.getElementById('menuAdmin').style.display = 'none';
+                    document.getElementById('userRoleBadge').style.display = 'none';
                 }
             });
         } else {
@@ -1623,6 +2252,8 @@
             if (!currentUser || !db) return;
             
             try {
+                const isFirstUser = (await db.collection('users').get()).size === 0;
+                
                 const initialData = {
                     email: currentUser.email,
                     createdAt: firebase.firestore.FieldValue.serverTimestamp(),
@@ -1630,12 +2261,19 @@
                     departments: [],
                     collaborators: [],
                     calculations: [],
+                    isAdmin: isFirstUser,
                     lastSync: firebase.firestore.FieldValue.serverTimestamp()
                 };
                 
                 await db.collection('users').doc(currentUser.uid).set(initialData);
                 userData = initialData;
                 console.log("✅ Dados iniciais criados no Firestore");
+                
+                if (isFirstUser) {
+                    isAdmin = true;
+                    document.getElementById('menuAdmin').style.display = 'block';
+                    document.getElementById('userRoleBadge').style.display = 'inline-block';
+                }
                 
             } catch (error) {
                 console.error("❌ Erro ao inicializar dados do usuário:", error);
@@ -1835,23 +2473,6 @@
         // FUNÇÕES DE ARMAZENAMENTO
         // ============================================
         
-        const COLLABORATORS_STORAGE_KEY = 'folha_colaboradores_cadastrados';
-        const CALCULATIONS_STORAGE_KEY = 'folha_calculos_salvos';
-        const DEPARTMENTS_STORAGE_KEY = 'folha_departamentos';
-        
-        const DEFAULT_DEPARTMENTS = [
-            { id: 1, name: "Produção", active: true },
-            { id: 2, name: "Manutenção", active: true },
-            { id: 3, name: "Administrativo", active: true },
-            { id: 4, name: "RH", active: true },
-            { id: 5, name: "Financeiro", active: true },
-            { id: 6, name: "TI", active: true },
-            { id: 7, name: "Comercial", active: true },
-            { id: 8, name: "Logística", active: true },
-            { id: 9, name: "Qualidade", active: true },
-            { id: 10, name: "Segurança", active: true }
-        ];
-        
         function getDepartmentsFromStorage() {
             const savedData = localStorage.getItem(DEPARTMENTS_STORAGE_KEY);
             return savedData ? JSON.parse(savedData) : [];
@@ -1953,7 +2574,33 @@
         }
 
         // ============================================
-        // FUNÇÕES DE IMPORTAÇÃO DE PLANILHA (NOVAS)
+        // FUNÇÕES DE NOTIFICAÇÃO DE DUPLICIDADE
+        // ============================================
+        
+        function showDuplicateNotification(message) {
+            const notification = document.getElementById('duplicateNotification');
+            const messageElement = document.getElementById('duplicateMessage');
+            
+            messageElement.textContent = message || 'Este cálculo já foi salvo anteriormente para este colaborador no mesmo mês.';
+            notification.style.display = 'flex';
+            
+            setTimeout(() => {
+                notification.style.display = 'none';
+            }, 5000);
+        }
+        
+        function checkDuplicateCalculation(collaboratorId, mesReferencia, currentCalculationId = null) {
+            const calculations = getSavedCalculations();
+            
+            return calculations.some(calc => 
+                calc.collaboratorId == collaboratorId && 
+                calc.mesReferencia === mesReferencia &&
+                (currentCalculationId === null || calc.id !== currentCalculationId)
+            );
+        }
+
+        // ============================================
+        // FUNÇÕES DE IMPORTAÇÃO DE PLANILHA
         // ============================================
         
         function openImportModal() {
@@ -2287,7 +2934,7 @@
             updateDepartmentSelect();
             updateCollaboratorSelect();
             updateCollaboratorFilterSelect();
-            renderCollaboratorsTable('active');
+            renderCollaboratorsTable(currentCollaboratorStatus);
             
             // Mensagem de sucesso
             const message = `
@@ -2328,8 +2975,6 @@
         // ============================================
         // FUNÇÕES GERAIS E DE CÁLCULO
         // ============================================
-        
-        const R$ = new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' });
 
         function getCurrentMonthString() {
             const now = new Date();
@@ -2476,12 +3121,12 @@
             const valorSobreavisoEspera = horasEspera * horaSobreaviso; 
 
             const baseHePericRate = baseHE;
-            const horaExtra50Valor = baseHE * 1.5;
+            const horaExtra50Valor = baseHE * (1 + (heNormalPorcentagem / 100));
             
-            const valorHoraExtraTrabalho50 = horasTrabalhadas50 * horaExtra50Valor; 
+            const valorHoraExtraTrabalho50 = horasTrabalhadas50 * baseHE * (1 + (heSobreavisoPorcentagem / 100)); 
             const valorHoraExtraTrabalho100 = horasTrabalhadas100 * horaExtra50Valor; 
             
-            const adicionalNoturnoHora = horaNormal * 0.20;
+            const adicionalNoturnoHora = horaNormal * (adicionalNoturnoPorcentagem / 100);
             const valorAdicionalNoturno = horasNoturnas * adicionalNoturnoHora;
 
             const diasUteisAjustados = Math.max(0, diasUteisBase - diasFeriado); 
@@ -2566,28 +3211,31 @@
                 reportDepartment.innerHTML = '<option value="">Todos os departamentos</option>';
             }
             
-            departments
+            // Ordenar departamentos por nome (ordem alfabética)
+            const sortedDepartments = [...departments]
                 .filter(dept => dept.active)
-                .forEach(department => {
-                    const option = document.createElement('option');
-                    option.value = department.name;
-                    option.textContent = department.name;
-                    select.appendChild(option);
-                    
-                    if (filterDepartment) {
-                        const filterOption = document.createElement('option');
-                        filterOption.value = department.name;
-                        filterOption.textContent = department.name;
-                        filterDepartment.appendChild(filterOption);
-                    }
-                    
-                    if (reportDepartment) {
-                        const reportOption = document.createElement('option');
-                        reportOption.value = department.name;
-                        reportOption.textContent = department.name;
-                        reportDepartment.appendChild(reportOption);
-                    }
-                });
+                .sort((a, b) => a.name.localeCompare(b.name, 'pt-BR'));
+            
+            sortedDepartments.forEach(department => {
+                const option = document.createElement('option');
+                option.value = department.name;
+                option.textContent = department.name;
+                select.appendChild(option);
+                
+                if (filterDepartment) {
+                    const filterOption = document.createElement('option');
+                    filterOption.value = department.name;
+                    filterOption.textContent = department.name;
+                    filterDepartment.appendChild(filterOption);
+                }
+                
+                if (reportDepartment) {
+                    const reportOption = document.createElement('option');
+                    reportOption.value = department.name;
+                    reportOption.textContent = department.name;
+                    reportDepartment.appendChild(reportOption);
+                }
+            });
         }
         
         function updateCollaboratorFilterSelect() {
@@ -2602,21 +3250,24 @@
                 reportSelect.innerHTML = '<option value="">Todos os colaboradores</option>';
             }
             
-            collaborators
+            // Ordenar colaboradores por nome (ordem alfabética)
+            const sortedCollaborators = [...collaborators]
                 .filter(collaborator => collaborator.active === true)
-                .forEach(collaborator => {
-                    const option = document.createElement('option');
-                    option.value = collaborator.id;
-                    option.textContent = `${collaborator.name} - ${collaborator.department}`;
-                    select.appendChild(option);
-                    
-                    if (reportSelect) {
-                        const reportOption = document.createElement('option');
-                        reportOption.value = collaborator.id;
-                        reportOption.textContent = `${collaborator.name} - ${collaborator.department}`;
-                        reportSelect.appendChild(reportOption);
-                    }
-                });
+                .sort((a, b) => a.name.localeCompare(b.name, 'pt-BR'));
+            
+            sortedCollaborators.forEach(collaborator => {
+                const option = document.createElement('option');
+                option.value = collaborator.id;
+                option.textContent = `${collaborator.name} - ${collaborator.department}`;
+                select.appendChild(option);
+                
+                if (reportSelect) {
+                    const reportOption = document.createElement('option');
+                    reportOption.value = collaborator.id;
+                    reportOption.textContent = `${collaborator.name} - ${collaborator.department}`;
+                    reportSelect.appendChild(reportOption);
+                }
+            });
         }
         
         function renderDepartmentsTable() {
@@ -2634,6 +3285,9 @@
                 return;
             }
             
+            // Ordenar departamentos por nome (ordem alfabética)
+            const sortedDepartments = [...departments].sort((a, b) => a.name.localeCompare(b.name, 'pt-BR'));
+            
             let html = `
                 <div class="overflow-x-auto">
                     <table class="department-table">
@@ -2647,7 +3301,7 @@
                         <tbody>
             `;
             
-            departments.forEach(department => {
+            sortedDepartments.forEach(department => {
                 html += `
                     <tr data-id="${department.id}">
                         <td class="font-medium">${department.name}</td>
@@ -2695,12 +3349,10 @@
                 });
             });
         }
-        
+
         // ============================================
         // SISTEMA DE CADASTRO DE COLABORADORES
         // ============================================
-        
-        let currentCollaboratorStatus = 'active';
         
         async function saveCollaborator(event) {
             event.preventDefault();
@@ -2806,14 +3458,17 @@
             const currentSelection = select.value;
             select.innerHTML = '<option value="">-- Selecione um colaborador --</option>';
             
-            collaborators
+            // Ordenar colaboradores por nome (ordem alfabética)
+            const sortedCollaborators = [...collaborators]
                 .filter(collaborator => collaborator.active === true)
-                .forEach(collaborator => {
-                    const option = document.createElement('option');
-                    option.value = collaborator.id;
-                    option.textContent = `${collaborator.name} - ${collaborator.department} (R$ ${collaborator.baseSalary})`;
-                    select.appendChild(option);
-                });
+                .sort((a, b) => a.name.localeCompare(b.name, 'pt-BR'));
+            
+            sortedCollaborators.forEach(collaborator => {
+                const option = document.createElement('option');
+                option.value = collaborator.id;
+                option.textContent = `${collaborator.name} - ${collaborator.department} (R$ ${collaborator.baseSalary})`;
+                select.appendChild(option);
+            });
             
             if (currentSelection && collaborators.some(c => c.id == currentSelection && c.active === true)) {
                 select.value = currentSelection;
@@ -2862,6 +3517,9 @@
                 return;
             }
             
+            // Ordenar colaboradores por nome (ordem alfabética)
+            const sortedCollaborators = [...filteredCollaborators].sort((a, b) => a.name.localeCompare(b.name, 'pt-BR'));
+            
             let html = `
                 <div class="overflow-x-auto">
                     <table class="collaborator-table">
@@ -2878,7 +3536,7 @@
                         <tbody>
             `;
             
-            filteredCollaborators.forEach(collaborator => {
+            sortedCollaborators.forEach(collaborator => {
                 const inactivationDate = status === 'inactive' 
                     ? new Date(collaborator.updatedAt).toLocaleDateString('pt-BR')
                     : '';
@@ -2900,18 +3558,15 @@
                                 <button class="edit-collaborator text-green-600 hover:text-green-800 text-sm" data-id="${collaborator.id}">
                                     <i class="fas fa-edit mr-1"></i> Editar
                                 </button>
-                                <button class="view-collaborator-history text-purple-600 hover:text-purple-800 text-sm" data-id="${collaborator.id}">
-                                    <i class="fas fa-history mr-1"></i> Histórico
-                                </button>
-                                <button class="inactivate-collaborator text-red-600 hover:text-red-800 text-sm" data-id="${collaborator.id}">
-                                    <i class="fas fa-user-slash mr-1"></i> Inativar
+                                <button class="delete-collaborator text-red-600 hover:text-red-800 text-sm" data-id="${collaborator.id}">
+                                    <i class="fas fa-trash mr-1"></i> Excluir
                                 </button>
                                 ` : `
                                 <button class="reactivate-collaborator text-green-600 hover:text-green-800 text-sm" data-id="${collaborator.id}">
                                     <i class="fas fa-user-check mr-1"></i> Reativar
                                 </button>
-                                <button class="view-collaborator-history text-purple-600 hover:text-purple-800 text-sm" data-id="${collaborator.id}">
-                                    <i class="fas fa-history mr-1"></i> Histórico
+                                <button class="delete-collaborator text-red-600 hover:text-red-800 text-sm" data-id="${collaborator.id}">
+                                    <i class="fas fa-trash mr-1"></i> Excluir
                                 </button>
                                 `}
                             </div>
@@ -2933,35 +3588,27 @@
             
             updateStatusButtons(status);
             
-            if (status === 'active') {
-                document.querySelectorAll('.edit-collaborator').forEach(button => {
-                    button.addEventListener('click', function() {
-                        const id = parseInt(this.getAttribute('data-id'));
-                        editCollaborator(id);
-                    });
-                });
-                
-                document.querySelectorAll('.inactivate-collaborator').forEach(button => {
-                    button.addEventListener('click', function() {
-                        const id = parseInt(this.getAttribute('data-id'));
-                        inactivateCollaborator(id);
-                    });
-                });
-            } else {
-                document.querySelectorAll('.reactivate-collaborator').forEach(button => {
-                    button.addEventListener('click', function() {
-                        const id = parseInt(this.getAttribute('data-id'));
-                        reactivateCollaborator(id);
-                    });
-                });
-            }
-            
-            document.querySelectorAll('.view-collaborator-history').forEach(button => {
+            // Event listeners para editar
+            document.querySelectorAll('.edit-collaborator').forEach(button => {
                 button.addEventListener('click', function() {
-                    const id = this.getAttribute('data-id');
-                    showHistory();
-                    document.getElementById('filterCollaborator').value = id;
-                    applyHistoryFilters();
+                    const id = parseInt(this.getAttribute('data-id'));
+                    editCollaborator(id);
+                });
+            });
+            
+            // Event listeners para excluir
+            document.querySelectorAll('.delete-collaborator').forEach(button => {
+                button.addEventListener('click', function() {
+                    const id = parseInt(this.getAttribute('data-id'));
+                    showDeleteCollaboratorModal(id);
+                });
+            });
+            
+            // Event listeners para reativar
+            document.querySelectorAll('.reactivate-collaborator').forEach(button => {
+                button.addEventListener('click', function() {
+                    const id = parseInt(this.getAttribute('data-id'));
+                    reactivateCollaborator(id);
                 });
             });
         }
@@ -2981,29 +3628,39 @@
             currentCollaboratorStatus = status;
         }
         
-        async function inactivateCollaborator(id) {
-            if (!confirm('Tem certeza que deseja inativar este colaborador? Ele não aparecerá mais nas listas de seleção, mas os cálculos históricos serão mantidos.')) {
-                return;
-            }
-            
+        function showDeleteCollaboratorModal(id) {
             const collaborators = getCollaborators();
-            const collaboratorIndex = collaborators.findIndex(c => c.id === id);
+            const collaborator = collaborators.find(c => c.id === id);
             
-            if (collaboratorIndex === -1) {
+            if (!collaborator) {
                 alert('Colaborador não encontrado!');
                 return;
             }
             
-            collaborators[collaboratorIndex].active = false;
-            collaborators[collaboratorIndex].updatedAt = new Date().toISOString();
+            document.getElementById('deleteCollaboratorName').textContent = collaborator.name;
+            document.getElementById('deleteCollaboratorModal').dataset.id = id;
+            document.getElementById('deleteCollaboratorModal').classList.add('active');
+        }
+        
+        async function confirmDeleteCollaborator() {
+            const id = parseInt(document.getElementById('deleteCollaboratorModal').dataset.id);
             
-            await saveCollaborators(collaborators);
+            const collaborators = getCollaborators();
+            const filteredCollaborators = collaborators.filter(c => c.id !== id);
             
+            await saveCollaborators(filteredCollaborators);
+            
+            closeDeleteCollaboratorModal();
             updateCollaboratorSelect();
             renderCollaboratorsTable(currentCollaboratorStatus);
             updateCollaboratorFilterSelect();
             
-            alert('Colaborador inativado com sucesso!');
+            alert('Colaborador excluído permanentemente!');
+        }
+        
+        function closeDeleteCollaboratorModal() {
+            document.getElementById('deleteCollaboratorModal').classList.remove('active');
+            document.getElementById('deleteCollaboratorModal').dataset.id = '';
         }
         
         async function reactivateCollaborator(id) {
@@ -3054,7 +3711,7 @@
             
             openModal();
         }
-        
+
         // ============================================
         // SISTEMA DE HISTÓRICO DE CÁLCULOS
         // ============================================
@@ -3076,6 +3733,16 @@
             }
             
             const isEditing = currentCalculationDetailId !== null;
+            const mesReferencia = document.getElementById('mesReferencia').value;
+            
+            // Verificar duplicidade
+            if (!isEditing && checkDuplicateCalculation(selectedCollaboratorId, mesReferencia)) {
+                showDuplicateNotification(`Já existe um cálculo salvo para ${collaborator.name} no mês ${mesReferencia}.`);
+                
+                if (!confirm('Já existe um cálculo para este colaborador neste mês. Deseja salvar mesmo assim?')) {
+                    return;
+                }
+            }
             
             const calculationData = {
                 id: isEditing ? currentCalculationDetailId : Date.now(),
@@ -3085,9 +3752,14 @@
                 collaboratorSalary: collaborator.baseSalary,
                 timestamp: new Date().toLocaleString('pt-BR'),
                 timestampISO: new Date().toISOString(),
-                mesReferencia: document.getElementById('mesReferencia').value,
+                mesReferencia: mesReferencia,
                 pagoFolha: document.getElementById('pagoFolha').checked,
                 competenciaPagamento: document.getElementById('competenciaPagamento').value,
+                config: {
+                    heNormalPorcentagem: heNormalPorcentagem,
+                    heSobreavisoPorcentagem: heSobreavisoPorcentagem,
+                    adicionalNoturnoPorcentagem: adicionalNoturnoPorcentagem
+                },
                 data: {
                     salarioBase: document.getElementById('salarioBase').value,
                     divisorMensal: document.getElementById('divisorMensal').value,
@@ -3244,7 +3916,7 @@
             renderHistoryTable();
             alert('Cálculo excluído do histórico com sucesso!');
         }
-        
+
         // ============================================
         // FUNÇÕES DE DETALHES DO CÁLCULO
         // ============================================
@@ -3576,6 +4248,13 @@
                 };
             }
             
+            // Verificar duplicidade após edição
+            if (checkDuplicateCalculation(originalCalculation.collaboratorId, updatedData.mesReferencia, currentCalculationDetailId)) {
+                if (!confirm('Já existe outro cálculo para este colaborador neste mês. Deseja salvar mesmo assim?')) {
+                    return;
+                }
+            }
+            
             calculations[calculationIndex] = updatedCalculation;
             await saveCalculations(calculations);
             
@@ -3593,10 +4272,192 @@
                 viewCalculationDetail(currentCalculationDetailId);
             }
         }
+
+        // ============================================
+        // FUNÇÕES DE DEPARTAMENTOS
+        // ============================================
         
+        async function saveNewDepartment(event) {
+            event.preventDefault();
+            
+            const name = document.getElementById('departmentName').value.trim();
+            const active = document.getElementById('departmentActive').checked;
+            
+            if (!name) {
+                alert('Por favor, preencha o nome do departamento.');
+                return;
+            }
+            
+            const departments = getDepartments();
+            const existingDepartment = departments.find(dept => 
+                dept.name.toLowerCase() === name.toLowerCase()
+            );
+            
+            if (existingDepartment && !window.editingDepartmentId) {
+                alert(`Já existe um departamento com o nome "${name}".`);
+                return;
+            }
+            
+            let newDepartment;
+            
+            if (window.editingDepartmentId) {
+                newDepartment = {
+                    id: window.editingDepartmentId,
+                    name: name,
+                    active: active,
+                    updatedAt: new Date().toISOString()
+                };
+                
+                const originalDepartment = departments.find(dept => dept.id === window.editingDepartmentId);
+                if (originalDepartment) {
+                    newDepartment.createdAt = originalDepartment.createdAt;
+                }
+                
+                const updatedDepartments = departments.map(dept => 
+                    dept.id === window.editingDepartmentId ? newDepartment : dept
+                );
+                
+                await saveDepartments(updatedDepartments);
+                window.editingDepartmentId = null;
+            } else {
+                newDepartment = {
+                    id: Date.now(),
+                    name: name,
+                    active: active,
+                    createdAt: new Date().toISOString(),
+                    updatedAt: new Date().toISOString()
+                };
+                
+                departments.push(newDepartment);
+                await saveDepartments(departments);
+            }
+            
+            closeDepartmentModal();
+            updateDepartmentSelect();
+            renderDepartmentsTable();
+            
+            alert(`Departamento ${name} salvo com sucesso! ${currentUser ? '(Sincronizado com a nuvem)' : ''}`);
+            
+            document.getElementById('departmentForm').reset();
+            document.getElementById('departmentModalTitle').textContent = "Cadastrar Novo Departamento";
+            document.getElementById('departmentModalButton').textContent = "Salvar Departamento";
+        }
+        
+        function editDepartment(id) {
+            const departments = getDepartments();
+            const department = departments.find(dept => dept.id === id);
+            
+            if (!department) {
+                alert('Departamento não encontrado!');
+                return;
+            }
+            
+            document.getElementById('departmentName').value = department.name;
+            document.getElementById('departmentActive').checked = department.active;
+            
+            document.getElementById('departmentModalTitle').textContent = "Editar Departamento";
+            document.getElementById('departmentModalButton').textContent = "Atualizar Departamento";
+            
+            window.editingDepartmentId = id;
+            
+            openDepartmentModal();
+        }
+        
+        async function deleteDepartment(id) {
+            const departments = getDepartments();
+            const department = departments.find(dept => dept.id === id);
+            
+            if (!department) {
+                alert('Departamento não encontrado!');
+                return;
+            }
+            
+            const collaborators = getCollaborators();
+            const collaboratorsInDepartment = collaborators.filter(collaborator => 
+                collaborator.department === department.name && collaborator.active === true
+            );
+            
+            let message = `Tem certeza que deseja excluir o departamento "${department.name}"?`;
+            
+            if (collaboratorsInDepartment.length > 0) {
+                message += `\n\nATENÇÃO: Existem ${collaboratorsInDepartment.length} colaborador(es) ativo(s) vinculados a este departamento. Eles ficarão sem departamento atribuído.`;
+            }
+            
+            if (!confirm(message)) {
+                return;
+            }
+            
+            const filteredDepartments = departments.filter(dept => dept.id !== id);
+            
+            if (collaboratorsInDepartment.length > 0) {
+                const updatedCollaborators = collaborators.map(collaborator => {
+                    if (collaborator.department === department.name) {
+                        return { ...collaborator, department: '' };
+                    }
+                    return collaborator;
+                });
+                await saveCollaborators(updatedCollaborators);
+            }
+            
+            await saveDepartments(filteredDepartments);
+            
+            updateDepartmentSelect();
+            renderDepartmentsTable();
+            updateCollaboratorFilterSelect();
+            
+            alert('Departamento excluído com sucesso!');
+        }
+
         // ============================================
-        // FUNÇÕES DE RELATÓRIOS (CORRIGIDAS - REFLEXOS FILTRADOS)
+        // FUNÇÕES DE INTERFACE
         // ============================================
+        
+        function showCalculator() {
+            document.getElementById('calculatorContent').classList.remove('hidden');
+            document.getElementById('collaboratorsContent').classList.add('hidden');
+            document.getElementById('historyContent').classList.add('hidden');
+            document.getElementById('reportsContent').classList.add('hidden');
+            
+            document.getElementById('menuCalculator').classList.add('active');
+            document.getElementById('menuCollaborators').classList.remove('active');
+            document.getElementById('menuHistory').classList.remove('active');
+            document.getElementById('menuReports').classList.remove('active');
+            document.getElementById('menuSettings').classList.remove('active');
+            document.getElementById('menuAdmin').classList.remove('active');
+        }
+        
+        function showCollaborators() {
+            document.getElementById('calculatorContent').classList.add('hidden');
+            document.getElementById('collaboratorsContent').classList.remove('hidden');
+            document.getElementById('historyContent').classList.add('hidden');
+            document.getElementById('reportsContent').classList.add('hidden');
+            
+            document.getElementById('menuCalculator').classList.remove('active');
+            document.getElementById('menuCollaborators').classList.add('active');
+            document.getElementById('menuHistory').classList.remove('active');
+            document.getElementById('menuReports').classList.remove('active');
+            document.getElementById('menuSettings').classList.remove('active');
+            document.getElementById('menuAdmin').classList.remove('active');
+            
+            showCollaboratorsTab();
+        }
+        
+        function showHistory() {
+            document.getElementById('calculatorContent').classList.add('hidden');
+            document.getElementById('collaboratorsContent').classList.add('hidden');
+            document.getElementById('historyContent').classList.remove('hidden');
+            document.getElementById('reportsContent').classList.add('hidden');
+            
+            document.getElementById('menuCalculator').classList.remove('active');
+            document.getElementById('menuCollaborators').classList.remove('active');
+            document.getElementById('menuHistory').classList.add('active');
+            document.getElementById('menuReports').classList.remove('active');
+            document.getElementById('menuSettings').classList.remove('active');
+            document.getElementById('menuAdmin').classList.remove('active');
+            
+            renderHistoryTable();
+            updateCollaboratorFilterSelect();
+        }
         
         function showReports() {
             document.getElementById('calculatorContent').classList.add('hidden');
@@ -3608,9 +4469,103 @@
             document.getElementById('menuCollaborators').classList.remove('active');
             document.getElementById('menuHistory').classList.remove('active');
             document.getElementById('menuReports').classList.add('active');
+            document.getElementById('menuSettings').classList.remove('active');
+            document.getElementById('menuAdmin').classList.remove('active');
             
             initializeColumnControls();
+            updateCollaboratorFilterSelect();
+            updateDepartmentSelect();
         }
+        
+        function showCollaboratorsTab() {
+            document.getElementById('collaboratorsTabContent').classList.remove('hidden');
+            document.getElementById('departmentsTabContent').classList.add('hidden');
+            
+            document.getElementById('tabCollaborators').classList.add('active');
+            document.getElementById('tabDepartments').classList.remove('active');
+            
+            renderCollaboratorsTable('active');
+        }
+        
+        function showDepartmentsTab() {
+            document.getElementById('collaboratorsTabContent').classList.add('hidden');
+            document.getElementById('departmentsTabContent').classList.remove('hidden');
+            
+            document.getElementById('tabCollaborators').classList.remove('active');
+            document.getElementById('tabDepartments').classList.add('active');
+            
+            renderDepartmentsTable();
+        }
+        
+        function openModal() {
+            document.getElementById('collaboratorModal').classList.add('active');
+        }
+        
+        function closeModal() {
+            document.getElementById('collaboratorModal').classList.remove('active');
+            resetCollaboratorForm();
+        }
+        
+        function openDepartmentModal() {
+            document.getElementById('departmentModal').classList.add('active');
+        }
+        
+        function closeDepartmentModal() {
+            document.getElementById('departmentModal').classList.remove('active');
+            document.getElementById('departmentForm').reset();
+            document.getElementById('departmentModalTitle').textContent = "Cadastrar Novo Departamento";
+            document.getElementById('departmentModalButton').textContent = "Salvar Departamento";
+            
+            window.editingDepartmentId = null;
+        }
+        
+        function openCalculationDetailModal() {
+            document.getElementById('calculationDetailModal').classList.add('active');
+        }
+        
+        function closeCalculationDetailModal() {
+            document.getElementById('calculationDetailModal').classList.remove('active');
+            currentCalculationDetailId = null;
+        }
+        
+        function applyHistoryFilters() {
+            const filters = {
+                collaboratorId: document.getElementById('filterCollaborator').value,
+                department: document.getElementById('filterDepartment').value,
+                startMonth: document.getElementById('filterStartMonth').value,
+                endMonth: document.getElementById('filterEndMonth').value
+            };
+            
+            renderHistoryTable(filters);
+        }
+        
+        function clearHistoryFilters() {
+            document.getElementById('filterCollaborator').value = '';
+            document.getElementById('filterDepartment').value = '';
+            document.getElementById('filterStartMonth').value = '';
+            document.getElementById('filterEndMonth').value = '';
+            
+            renderHistoryTable();
+        }
+        
+        function toggleBasesVisibility() {
+            const basesContainer = document.getElementById('basesContainer');
+            const basesIcon = document.getElementById('basesIcon');
+            
+            if (basesContainer.classList.contains('hidden')) {
+                basesContainer.classList.remove('hidden');
+                basesIcon.classList.remove('fa-chevron-down');
+                basesIcon.classList.add('fa-chevron-up');
+            } else {
+                basesContainer.classList.add('hidden');
+                basesIcon.classList.remove('fa-chevron-up');
+                basesIcon.classList.add('fa-chevron-down');
+            }
+        }
+
+        // ============================================
+        // FUNÇÕES DE RELATÓRIOS
+        // ============================================
         
         function initializeColumnControls() {
             document.querySelectorAll('.column-toggle-btn').forEach(button => {
@@ -3721,7 +4676,6 @@
                         adicionalNoturnoDisplay: formatTimeForDisplay(calc.data.horasNoturnas),
                         adicionalNoturnoValor: parseFloat(calc.data.resultados.valorAdicionalNoturno.replace('R$', '').replace('.', '').replace(',', '.').trim()) || 0,
                         reflexosValor: parseFloat(calc.data.resultados.valorReflexoDSRTotalSum.replace('R$', '').replace('.', '').replace(',', '.').trim()) || 0,
-                        // Valores individuais dos reflexos para filtragem
                         reflexoSobreavisoValor: parseFloat(calc.data.resultados.valorReflexoSobreavisoEspera.replace('R$', '').replace('.', '').replace(',', '.').trim()) || 0,
                         reflexoSobreavisoTrabalhadoValor: parseFloat(calc.data.resultados.valorReflexoSobreavisoTrabalhado.replace('R$', '').replace('.', '').replace(',', '.').trim()) || 0,
                         reflexoHorasExtrasValor: parseFloat(calc.data.resultados.valorReflexoHorasExtrasNormal.replace('R$', '').replace('.', '').replace(',', '.').trim()) || 0,
@@ -3770,7 +4724,6 @@
             return "00:00";
         }
         
-        // FUNÇÃO CORRIGIDA: Agora os reflexos também são filtrados!
         function updateReportTable(reportData = []) {
             const tableBody = document.getElementById('reportTableBody');
             const tableHeader = document.getElementById('reportTableHeader');
@@ -4161,273 +5114,7 @@
             
             alert('Relatório exportado como PDF com sucesso! O TOTAL GERAL considera APENAS as colunas selecionadas, incluindo os REFLEXOS correspondentes.');
         }
-        
-        // ============================================
-        // FUNÇÕES DE DEPARTAMENTOS
-        // ============================================
-        
-        async function saveNewDepartment(event) {
-            event.preventDefault();
-            
-            const name = document.getElementById('departmentName').value.trim();
-            const active = document.getElementById('departmentActive').checked;
-            
-            if (!name) {
-                alert('Por favor, preencha o nome do departamento.');
-                return;
-            }
-            
-            const departments = getDepartments();
-            const existingDepartment = departments.find(dept => 
-                dept.name.toLowerCase() === name.toLowerCase()
-            );
-            
-            if (existingDepartment && !window.editingDepartmentId) {
-                alert(`Já existe um departamento com o nome "${name}".`);
-                return;
-            }
-            
-            let newDepartment;
-            
-            if (window.editingDepartmentId) {
-                newDepartment = {
-                    id: window.editingDepartmentId,
-                    name: name,
-                    active: active,
-                    updatedAt: new Date().toISOString()
-                };
-                
-                const originalDepartment = departments.find(dept => dept.id === window.editingDepartmentId);
-                if (originalDepartment) {
-                    newDepartment.createdAt = originalDepartment.createdAt;
-                }
-                
-                const updatedDepartments = departments.map(dept => 
-                    dept.id === window.editingDepartmentId ? newDepartment : dept
-                );
-                
-                await saveDepartments(updatedDepartments);
-                window.editingDepartmentId = null;
-            } else {
-                newDepartment = {
-                    id: Date.now(),
-                    name: name,
-                    active: active,
-                    createdAt: new Date().toISOString(),
-                    updatedAt: new Date().toISOString()
-                };
-                
-                departments.push(newDepartment);
-                await saveDepartments(departments);
-            }
-            
-            closeDepartmentModal();
-            updateDepartmentSelect();
-            renderDepartmentsTable();
-            
-            alert(`Departamento ${name} salvo com sucesso! ${currentUser ? '(Sincronizado com a nuvem)' : ''}`);
-            
-            document.getElementById('departmentForm').reset();
-            document.getElementById('departmentModalTitle').textContent = "Cadastrar Novo Departamento";
-            document.getElementById('departmentModalButton').textContent = "Salvar Departamento";
-        }
-        
-        function editDepartment(id) {
-            const departments = getDepartments();
-            const department = departments.find(dept => dept.id === id);
-            
-            if (!department) {
-                alert('Departamento não encontrado!');
-                return;
-            }
-            
-            document.getElementById('departmentName').value = department.name;
-            document.getElementById('departmentActive').checked = department.active;
-            
-            document.getElementById('departmentModalTitle').textContent = "Editar Departamento";
-            document.getElementById('departmentModalButton').textContent = "Atualizar Departamento";
-            
-            window.editingDepartmentId = id;
-            
-            openDepartmentModal();
-        }
-        
-        async function deleteDepartment(id) {
-            const departments = getDepartments();
-            const department = departments.find(dept => dept.id === id);
-            
-            if (!department) {
-                alert('Departamento não encontrado!');
-                return;
-            }
-            
-            const collaborators = getCollaborators();
-            const collaboratorsInDepartment = collaborators.filter(collaborator => 
-                collaborator.department === department.name && collaborator.active === true
-            );
-            
-            let message = `Tem certeza que deseja excluir o departamento "${department.name}"?`;
-            
-            if (collaboratorsInDepartment.length > 0) {
-                message += `\n\nATENÇÃO: Existem ${collaboratorsInDepartment.length} colaborador(es) ativo(s) vinculados a este departamento. Eles ficarão sem departamento atribuído.`;
-            }
-            
-            if (!confirm(message)) {
-                return;
-            }
-            
-            const filteredDepartments = departments.filter(dept => dept.id !== id);
-            
-            if (collaboratorsInDepartment.length > 0) {
-                const updatedCollaborators = collaborators.map(collaborator => {
-                    if (collaborator.department === department.name) {
-                        return { ...collaborator, department: '' };
-                    }
-                    return collaborator;
-                });
-                await saveCollaborators(updatedCollaborators);
-            }
-            
-            await saveDepartments(filteredDepartments);
-            
-            updateDepartmentSelect();
-            renderDepartmentsTable();
-            updateCollaboratorFilterSelect();
-            
-            alert('Departamento excluído com sucesso!');
-        }
-        
-        // ============================================
-        // FUNÇÕES DE INTERFACE
-        // ============================================
-        
-        function showCalculator() {
-            document.getElementById('calculatorContent').classList.remove('hidden');
-            document.getElementById('collaboratorsContent').classList.add('hidden');
-            document.getElementById('historyContent').classList.add('hidden');
-            document.getElementById('reportsContent').classList.add('hidden');
-            
-            document.getElementById('menuCalculator').classList.add('active');
-            document.getElementById('menuCollaborators').classList.remove('active');
-            document.getElementById('menuHistory').classList.remove('active');
-            document.getElementById('menuReports').classList.remove('active');
-        }
-        
-        function showCollaborators() {
-            document.getElementById('calculatorContent').classList.add('hidden');
-            document.getElementById('collaboratorsContent').classList.remove('hidden');
-            document.getElementById('historyContent').classList.add('hidden');
-            document.getElementById('reportsContent').classList.add('hidden');
-            
-            document.getElementById('menuCalculator').classList.remove('active');
-            document.getElementById('menuCollaborators').classList.add('active');
-            document.getElementById('menuHistory').classList.remove('active');
-            document.getElementById('menuReports').classList.remove('active');
-            
-            showCollaboratorsTab();
-        }
-        
-        function showHistory() {
-            document.getElementById('calculatorContent').classList.add('hidden');
-            document.getElementById('collaboratorsContent').classList.add('hidden');
-            document.getElementById('historyContent').classList.remove('hidden');
-            document.getElementById('reportsContent').classList.add('hidden');
-            
-            document.getElementById('menuCalculator').classList.remove('active');
-            document.getElementById('menuCollaborators').classList.remove('active');
-            document.getElementById('menuHistory').classList.add('active');
-            document.getElementById('menuReports').classList.remove('active');
-            
-            renderHistoryTable();
-            updateCollaboratorFilterSelect();
-        }
-        
-        function showCollaboratorsTab() {
-            document.getElementById('collaboratorsTabContent').classList.remove('hidden');
-            document.getElementById('departmentsTabContent').classList.add('hidden');
-            
-            document.getElementById('tabCollaborators').classList.add('active');
-            document.getElementById('tabDepartments').classList.remove('active');
-            
-            renderCollaboratorsTable('active');
-        }
-        
-        function showDepartmentsTab() {
-            document.getElementById('collaboratorsTabContent').classList.add('hidden');
-            document.getElementById('departmentsTabContent').classList.remove('hidden');
-            
-            document.getElementById('tabCollaborators').classList.remove('active');
-            document.getElementById('tabDepartments').classList.add('active');
-            
-            renderDepartmentsTable();
-        }
-        
-        function openModal() {
-            document.getElementById('collaboratorModal').classList.add('active');
-        }
-        
-        function closeModal() {
-            document.getElementById('collaboratorModal').classList.remove('active');
-            resetCollaboratorForm();
-        }
-        
-        function openDepartmentModal() {
-            document.getElementById('departmentModal').classList.add('active');
-        }
-        
-        function closeDepartmentModal() {
-            document.getElementById('departmentModal').classList.remove('active');
-            document.getElementById('departmentForm').reset();
-            document.getElementById('departmentModalTitle').textContent = "Cadastrar Novo Departamento";
-            document.getElementById('departmentModalButton').textContent = "Salvar Departamento";
-            
-            window.editingDepartmentId = null;
-        }
-        
-        function openCalculationDetailModal() {
-            document.getElementById('calculationDetailModal').classList.add('active');
-        }
-        
-        function closeCalculationDetailModal() {
-            document.getElementById('calculationDetailModal').classList.remove('active');
-            currentCalculationDetailId = null;
-        }
-        
-        function applyHistoryFilters() {
-            const filters = {
-                collaboratorId: document.getElementById('filterCollaborator').value,
-                department: document.getElementById('filterDepartment').value,
-                startMonth: document.getElementById('filterStartMonth').value,
-                endMonth: document.getElementById('filterEndMonth').value
-            };
-            
-            renderHistoryTable(filters);
-        }
-        
-        function clearHistoryFilters() {
-            document.getElementById('filterCollaborator').value = '';
-            document.getElementById('filterDepartment').value = '';
-            document.getElementById('filterStartMonth').value = '';
-            document.getElementById('filterEndMonth').value = '';
-            
-            renderHistoryTable();
-        }
-        
-        function toggleBasesVisibility() {
-            const basesContainer = document.getElementById('basesContainer');
-            const basesIcon = document.getElementById('basesIcon');
-            
-            if (basesContainer.classList.contains('hidden')) {
-                basesContainer.classList.remove('hidden');
-                basesIcon.classList.remove('fa-chevron-down');
-                basesIcon.classList.add('fa-chevron-up');
-            } else {
-                basesContainer.classList.add('hidden');
-                basesIcon.classList.remove('fa-chevron-up');
-                basesIcon.classList.add('fa-chevron-down');
-            }
-        }
-        
+
         // ============================================
         // FUNÇÕES AUXILIARES
         // ============================================
@@ -4442,13 +5129,16 @@
             diasTrabalhadosInput.value = diasTrabalhadosAjustados;
             calcular();
         }
-        
+
         // ============================================
         // INICIALIZAÇÃO
         // ============================================
         
         document.addEventListener('DOMContentLoaded', () => {
-            console.log("🚀 Aplicação inicializada com importação de planilhas");
+            console.log("🚀 Aplicação inicializada com todas as novas funcionalidades");
+            
+            // Carregar configurações
+            loadSettings();
             
             updateFirebaseStatus('loading', 'Inicializando...');
             
@@ -4489,7 +5179,119 @@
             document.getElementById('competenciaPagamento').addEventListener('change', calcular);
             
             document.getElementById('clearButton').addEventListener('click', resetInputs);
-
+            
+            document.getElementById('saveCalculation').addEventListener('click', saveCurrentCalculation);
+            
+            document.getElementById('refreshCollaborators').addEventListener('click', () => {
+                updateCollaboratorSelect();
+                updateCollaboratorFilterSelect();
+            });
+            
+            document.getElementById('collaboratorSelect').addEventListener('change', function() {
+                if (this.value) {
+                    loadCollaboratorToCalculator(this.value);
+                }
+            });
+            
+            document.getElementById('refreshCollaboratorList').addEventListener('click', () => {
+                renderCollaboratorsTable(currentCollaboratorStatus);
+            });
+            
+            document.getElementById('showActiveCollaborators').addEventListener('click', () => {
+                renderCollaboratorsTable('active');
+            });
+            
+            document.getElementById('showInactiveCollaborators').addEventListener('click', () => {
+                renderCollaboratorsTable('inactive');
+            });
+            
+            document.getElementById('refreshDepartments').addEventListener('click', renderDepartmentsTable);
+            
+            document.getElementById('refreshHistory').addEventListener('click', () => {
+                renderHistoryTable();
+                updateCollaboratorFilterSelect();
+            });
+            
+            document.getElementById('clearHistoryFilters').addEventListener('click', clearHistoryFilters);
+            
+            document.getElementById('applyFilters').addEventListener('click', applyHistoryFilters);
+            
+            document.getElementById('toggleBases').addEventListener('click', toggleBasesVisibility);
+            
+            // Eventos do menu
+            document.getElementById('menuCalculator').addEventListener('click', showCalculator);
+            document.getElementById('menuCollaborators').addEventListener('click', showCollaborators);
+            document.getElementById('menuHistory').addEventListener('click', showHistory);
+            document.getElementById('menuReports').addEventListener('click', showReports);
+            document.getElementById('menuSettings').addEventListener('click', openSettingsModal);
+            document.getElementById('menuAdmin').addEventListener('click', openAdminModal);
+            
+            // Eventos das abas de colaboradores/departamentos
+            document.getElementById('tabCollaborators').addEventListener('click', showCollaboratorsTab);
+            document.getElementById('tabDepartments').addEventListener('click', showDepartmentsTab);
+            
+            // Eventos do modal de colaborador
+            document.getElementById('closeModal').addEventListener('click', closeModal);
+            document.getElementById('cancelCollaborator').addEventListener('click', closeModal);
+            document.getElementById('collaboratorForm').addEventListener('submit', saveCollaborator);
+            document.getElementById('addNewCollaborator').addEventListener('click', () => {
+                resetCollaboratorForm();
+                openModal();
+            });
+            
+            // Evento para adicionar departamento pelo modal de colaborador
+            document.getElementById('addDepartmentFromCollaborator').addEventListener('click', (e) => {
+                e.preventDefault();
+                closeModal();
+                openDepartmentModal();
+            });
+            
+            // Eventos do modal de departamento
+            document.getElementById('closeDepartmentModal').addEventListener('click', closeDepartmentModal);
+            document.getElementById('cancelDepartment').addEventListener('click', closeDepartmentModal);
+            document.getElementById('departmentForm').addEventListener('submit', saveNewDepartment);
+            document.getElementById('addNewDepartment').addEventListener('click', openDepartmentModal);
+            
+            // Eventos do modal de detalhes do cálculo
+            document.getElementById('closeCalculationDetailModal').addEventListener('click', closeCalculationDetailModal);
+            document.getElementById('closeCalculationDetail').addEventListener('click', closeCalculationDetailModal);
+            document.getElementById('editCalculationBtn').addEventListener('click', enableDetailEditMode);
+            document.getElementById('saveEditBtn').addEventListener('click', saveDetailEdit);
+            document.getElementById('cancelEditBtn').addEventListener('click', cancelDetailEdit);
+            
+            // Eventos do modal de exclusão de colaborador
+            document.getElementById('closeDeleteModal').addEventListener('click', closeDeleteCollaboratorModal);
+            document.getElementById('cancelDeleteCollaborator').addEventListener('click', closeDeleteCollaboratorModal);
+            document.getElementById('confirmDeleteCollaborator').addEventListener('click', confirmDeleteCollaborator);
+            
+            // Eventos do modal de exclusão de usuário
+            document.getElementById('closeDeleteUserModal').addEventListener('click', closeDeleteUserModal);
+            document.getElementById('cancelDeleteUser').addEventListener('click', closeDeleteUserModal);
+            document.getElementById('confirmDeleteUser').addEventListener('click', confirmDeleteUser);
+            
+            // Eventos de relatórios
+            document.getElementById('refreshReports').addEventListener('click', () => {
+                updateCollaboratorFilterSelect();
+                updateDepartmentSelect();
+            });
+            document.getElementById('generateReport').addEventListener('click', generateReport);
+            document.getElementById('clearReportFilters').addEventListener('click', clearReportFilters);
+            document.getElementById('exportReportCSV').addEventListener('click', exportReportCSV);
+            document.getElementById('exportReportPDF').addEventListener('click', exportReportPDF);
+            
+            // Eventos de configurações
+            document.getElementById('closeSettingsModal').addEventListener('click', closeSettingsModal);
+            document.getElementById('saveSettings').addEventListener('click', saveSettings);
+            
+            // Eventos de administração
+            document.getElementById('closeAdminModal').addEventListener('click', closeAdminModal);
+            
+            // Formatação de moeda no campo de salário do colaborador
+            document.getElementById('collaboratorBaseSalary').addEventListener('input', function() {
+                formatCurrencyInput(this);
+            });
+            
+            // Eventos de impressão/PDF
             document.getElementById('printButton').addEventListener('click', () => {
                 const { jsPDF } = window.jspdf;
                 const doc = new jsPDF('p', 'mm', 'a4');
@@ -4538,11 +5340,11 @@
                 
                 doc.text(`Horas de Sobreaviso (Espera): ${document.getElementById('valorSobreavisoEspera').textContent}`, 25, y);
                 y += 7;
-                doc.text(`Horas de Sobreaviso Trabalhado (50%): ${document.getElementById('valorHoraExtraTrabalho50').textContent}`, 25, y);
+                doc.text(`Horas de Sobreaviso Trabalhado (${heSobreavisoPorcentagem}%): ${document.getElementById('valorHoraExtraTrabalho50').textContent}`, 25, y);
                 y += 7;
-                doc.text(`Horas Extras 50% (Normal): ${document.getElementById('valorHoraExtraTrabalho100').textContent}`, 25, y);
+                doc.text(`Horas Extras ${heNormalPorcentagem}% (Normal): ${document.getElementById('valorHoraExtraTrabalho100').textContent}`, 25, y);
                 y += 7;
-                doc.text(`Horas de Adicional Noturno: ${document.getElementById('valorAdicionalNoturno').textContent}`, 25, y);
+                doc.text(`Horas de Adicional Noturno (${adicionalNoturnoPorcentagem}%): ${document.getElementById('valorAdicionalNoturno').textContent}`, 25, y);
                 y += 10;
                 
                 doc.setFontSize(14);
@@ -4555,11 +5357,11 @@
                 
                 doc.text(`Reflexo Sobreaviso DSR (Espera 1/3): ${document.getElementById('valorReflexoSobreavisoEspera').textContent}`, 25, y);
                 y += 7;
-                doc.text(`Reflexo Sob. Trabalhado DSR (HE 50%): ${document.getElementById('valorReflexoSobreavisoTrabalhado').textContent}`, 25, y);
+                doc.text(`Reflexo Sob. Trabalhado DSR (HE ${heSobreavisoPorcentagem}%): ${document.getElementById('valorReflexoSobreavisoTrabalhado').textContent}`, 25, y);
                 y += 7;
-                doc.text(`Reflexo Horas Extras DSR (Normal 50%): ${document.getElementById('valorReflexoHorasExtrasNormal').textContent}`, 25, y);
+                doc.text(`Reflexo Horas Extras DSR (Normal ${heNormalPorcentagem}%): ${document.getElementById('valorReflexoHorasExtrasNormal').textContent}`, 25, y);
                 y += 7;
-                doc.text(`Reflexo Adic. Noturno DSR: ${document.getElementById('valorReflexoAdicionalNoturno').textContent}`, 25, y);
+                doc.text(`Reflexo Adic. Noturno DSR (${adicionalNoturnoPorcentagem}%): ${document.getElementById('valorReflexoAdicionalNoturno').textContent}`, 25, y);
                 y += 10;
                 
                 doc.setFontSize(12);
@@ -4605,91 +5407,6 @@
                 alert('PDF gerado com sucesso!');
             });
             
-            document.getElementById('saveCalculation').addEventListener('click', saveCurrentCalculation);
-            
-            document.getElementById('refreshCollaborators').addEventListener('click', () => {
-                updateCollaboratorSelect();
-                updateCollaboratorFilterSelect();
-            });
-            
-            document.getElementById('collaboratorSelect').addEventListener('change', function() {
-                if (this.value) {
-                    loadCollaboratorToCalculator(this.value);
-                }
-            });
-            
-            document.getElementById('refreshCollaboratorList').addEventListener('click', () => {
-                renderCollaboratorsTable(currentCollaboratorStatus);
-            });
-            
-            document.getElementById('showActiveCollaborators').addEventListener('click', () => {
-                renderCollaboratorsTable('active');
-            });
-            
-            document.getElementById('showInactiveCollaborators').addEventListener('click', () => {
-                renderCollaboratorsTable('inactive');
-            });
-            
-            document.getElementById('refreshDepartments').addEventListener('click', renderDepartmentsTable);
-            
-            document.getElementById('refreshHistory').addEventListener('click', () => {
-                renderHistoryTable();
-                updateCollaboratorFilterSelect();
-            });
-            
-            document.getElementById('clearHistoryFilters').addEventListener('click', clearHistoryFilters);
-            
-            document.getElementById('applyFilters').addEventListener('click', applyHistoryFilters);
-            
-            document.getElementById('toggleBases').addEventListener('click', toggleBasesVisibility);
-            
-            document.getElementById('menuCalculator').addEventListener('click', showCalculator);
-            document.getElementById('menuCollaborators').addEventListener('click', showCollaborators);
-            document.getElementById('menuHistory').addEventListener('click', showHistory);
-            document.getElementById('menuReports').addEventListener('click', showReports);
-            
-            document.getElementById('tabCollaborators').addEventListener('click', showCollaboratorsTab);
-            document.getElementById('tabDepartments').addEventListener('click', showDepartmentsTab);
-            
-            document.getElementById('closeModal').addEventListener('click', closeModal);
-            document.getElementById('cancelCollaborator').addEventListener('click', closeModal);
-            document.getElementById('collaboratorForm').addEventListener('submit', saveCollaborator);
-            document.getElementById('addNewCollaborator').addEventListener('click', () => {
-                resetCollaboratorForm();
-                openModal();
-            });
-            
-            document.getElementById('addDepartmentFromCollaborator').addEventListener('click', (e) => {
-                e.preventDefault();
-                closeModal();
-                openDepartmentModal();
-            });
-            
-            document.getElementById('closeDepartmentModal').addEventListener('click', closeDepartmentModal);
-            document.getElementById('cancelDepartment').addEventListener('click', closeDepartmentModal);
-            document.getElementById('departmentForm').addEventListener('submit', saveNewDepartment);
-            document.getElementById('addNewDepartment').addEventListener('click', openDepartmentModal);
-            
-            document.getElementById('closeCalculationDetailModal').addEventListener('click', closeCalculationDetailModal);
-            document.getElementById('closeCalculationDetail').addEventListener('click', closeCalculationDetailModal);
-            document.getElementById('editCalculationBtn').addEventListener('click', enableDetailEditMode);
-            document.getElementById('saveEditBtn').addEventListener('click', saveDetailEdit);
-            document.getElementById('cancelEditBtn').addEventListener('click', cancelDetailEdit);
-            
-            document.getElementById('refreshReports').addEventListener('click', () => {
-                updateCollaboratorFilterSelect();
-                updateDepartmentSelect();
-            });
-            
-            document.getElementById('generateReport').addEventListener('click', generateReport);
-            document.getElementById('clearReportFilters').addEventListener('click', clearReportFilters);
-            document.getElementById('exportReportCSV').addEventListener('click', exportReportCSV);
-            document.getElementById('exportReportPDF').addEventListener('click', exportReportPDF);
-            
-            document.getElementById('collaboratorBaseSalary').addEventListener('input', function() {
-                formatCurrencyInput(this);
-            });
-            
             // EVENTOS DE IMPORTAÇÃO DE PLANILHA
             document.getElementById('importCollaboratorsBtn').addEventListener('click', openImportModal);
             document.getElementById('closeImportModal').addEventListener('click', closeImportModal);
@@ -4733,6 +5450,7 @@
             
             fileInput.addEventListener('change', handleFileSelect);
             
+            // Fechar modais clicando no fundo
             document.getElementById('importSpreadsheetModal').addEventListener('click', function(event) {
                 if (event.target === this) {
                     closeImportModal();
@@ -4754,6 +5472,30 @@
             document.getElementById('calculationDetailModal').addEventListener('click', function(event) {
                 if (event.target === this) {
                     closeCalculationDetailModal();
+                }
+            });
+            
+            document.getElementById('deleteCollaboratorModal').addEventListener('click', function(event) {
+                if (event.target === this) {
+                    closeDeleteCollaboratorModal();
+                }
+            });
+            
+            document.getElementById('deleteUserModal').addEventListener('click', function(event) {
+                if (event.target === this) {
+                    closeDeleteUserModal();
+                }
+            });
+            
+            document.getElementById('settingsModal').addEventListener('click', function(event) {
+                if (event.target === this) {
+                    closeSettingsModal();
+                }
+            });
+            
+            document.getElementById('adminModal').addEventListener('click', function(event) {
+                if (event.target === this) {
+                    closeAdminModal();
                 }
             });
             
