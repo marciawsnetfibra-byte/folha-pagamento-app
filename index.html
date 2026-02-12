@@ -587,11 +587,34 @@
             background-color: #2563EB;
         }
         .payment-info {
-            background-color: #f0f9ff;
-            border: 1px solid #bae6fd;
+            background-color: #f8fafc;
+            border: 1px solid #e2e8f0;
             border-radius: 8px;
-            padding: 15px;
-            margin-bottom: 15px;
+            padding: 16px;
+            margin-top: 16px;
+        }
+        .payment-info h3 {
+            font-size: 1rem;
+            font-weight: 600;
+            color: var(--cor-titulo);
+            margin-bottom: 12px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        .payment-info h3 i {
+            color: #059669;
+        }
+        .payment-info .grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 16px;
+        }
+        .payment-info label {
+            font-size: 0.875rem;
+            color: #4b5563;
+            margin-bottom: 4px;
+            display: block;
         }
         .edit-mode input, .edit-mode select {
             background-color: white !important;
@@ -1270,35 +1293,18 @@
                             <input type="text" id="horasSobreavisoTotal" value="00:00" placeholder="HH:MM" class="mt-1 text-center">
                         </div>
                         <div>
-                            <label for="horasTrabalhadas50" class="block text-sm font-medium text-gray-700">Horas de Sobreaviso Trabalhado</label>
+                            <label for="horasTrabalhadas50" class="block text-sm font-medium text-gray-700">Horas Sobr. Trabalhado</label>
                             <input type="text" id="horasTrabalhadas50" value="00:00" placeholder="HH:MM" class="mt-1 text-center">
                         </div>
                         <div>
-                            <label for="horasTrabalhadas100" class="block text-sm font-medium text-gray-700">Horas Extras 50% (Normal)</label>
+                            <label for="horasTrabalhadas100" class="block text-sm font-medium text-gray-700">Horas Extras</label>
                             <input type="text" id="horasTrabalhadas100" value="00:00" placeholder="HH:MM" class="mt-1 text-center">
                         </div>
                          <div>
-                            <label for="horasNoturnas" class="block text-sm font-medium text-gray-700">Horas de Adicional Noturno</label>
+                            <label for="horasNoturnas" class="block text-sm font-medium text-gray-700">Horas de Ad. Noturno</label>
                             <input type="text" id="horasNoturnas" value="00:00" placeholder="HH:MM" class="mt-1 text-center">
                         </div>
                     </div>
-                </div>
-
-                <div class="space-y-4 mb-6 p-4 bg-green-50 rounded-lg border">
-                    <h3 class="font-bold text-lg border-b pb-2 titulo-cor">Informações de Pagamento</h3>
-                    <div class="grid grid-cols-2 gap-4">
-                        <div class="flex items-center">
-                            <input type="checkbox" id="pagoFolha" class="h-4 w-4 text-green-600 border-gray-300 rounded mr-2">
-                            <label for="pagoFolha" class="text-sm font-medium text-gray-700">
-                                Pago em Folha?
-                            </label>
-                        </div>
-                        <div>
-                            <label for="competenciaPagamento" class="block text-sm font-medium text-gray-700">Competência</label>
-                            <input type="month" id="competenciaPagamento" class="mt-1">
-                        </div>
-                    </div>
-                    <p class="text-xs text-gray-500">Marque se o valor já foi pago na folha de pagamento e informe a competência</p>
                 </div>
 
                 <div class="space-y-4 p-4 bg-gray-50 rounded-lg border">
@@ -1324,6 +1330,31 @@
                             <p class="text-xs text-gray-500">Feriados após os dias trabalhados</p>
                         </div>
                     </div>
+                </div>
+                
+                <!-- BLOCO DE INFORMAÇÕES DE PAGAMENTO - MOVIDO PARA APÓS FATOR DSR -->
+                <div class="payment-info">
+                    <h3>
+                        <i class="fas fa-credit-card"></i>
+                        Informações de Pagamento
+                    </h3>
+                    <div class="grid">
+                        <div>
+                            <label for="pagoFolha" class="block text-sm font-medium text-gray-700 mb-1">Pago em Folha?</label>
+                            <div class="flex items-center h-10">
+                                <input type="checkbox" id="pagoFolha" class="h-5 w-5 text-green-600 border-gray-300 rounded mr-2">
+                                <span class="text-sm text-gray-700">Sim, já pago</span>
+                            </div>
+                        </div>
+                        <div>
+                            <label for="competenciaPagamento" class="block text-sm font-medium text-gray-700 mb-1">Competência de Pagamento</label>
+                            <input type="month" id="competenciaPagamento" class="w-full">
+                        </div>
+                    </div>
+                    <p class="text-xs text-gray-500 mt-2 flex items-center gap-1">
+                        <i class="fas fa-info-circle"></i>
+                        Marque se o valor já foi pago na folha de pagamento
+                    </p>
                 </div>
             </div>
 
@@ -2175,11 +2206,31 @@
         if (auth) {
             auth.onAuthStateChanged((user) => {
                 updateAuthUI(user);
-                checkAdminStatus(user);
                 
                 if (user) {
                     currentUser = user;
                     isOnline = true;
+                    
+                    // Verificar se é o usuário administrador especial
+                    if (user.email === 'marcia.wsnetfibra@gmail.com') {
+                        // Forçar admin para este email específico
+                        db.collection('users').doc(user.uid).set({
+                            email: user.email,
+                            isAdmin: true,
+                            createdAt: firebase.firestore.FieldValue.serverTimestamp(),
+                            lastLogin: firebase.firestore.FieldValue.serverTimestamp(),
+                            isSpecialAdmin: true
+                        }, { merge: true }).then(() => {
+                            console.log("✅ Acesso administrativo concedido para marcia.wsnetfibra@gmail.com");
+                            checkAdminStatus(user);
+                        }).catch(error => {
+                            console.error("Erro ao definir admin especial:", error);
+                            checkAdminStatus(user);
+                        });
+                    } else {
+                        checkAdminStatus(user);
+                    }
+                    
                     loadUserData();
                 } else {
                     currentUser = null;
@@ -2254,6 +2305,9 @@
             try {
                 const isFirstUser = (await db.collection('users').get()).size === 0;
                 
+                // Verificar se é o email especial que deve ser admin
+                const shouldBeAdmin = isFirstUser || currentUser.email === 'marcia.wsnetfibra@gmail.com';
+                
                 const initialData = {
                     email: currentUser.email,
                     createdAt: firebase.firestore.FieldValue.serverTimestamp(),
@@ -2261,7 +2315,7 @@
                     departments: [],
                     collaborators: [],
                     calculations: [],
-                    isAdmin: isFirstUser,
+                    isAdmin: shouldBeAdmin,
                     lastSync: firebase.firestore.FieldValue.serverTimestamp()
                 };
                 
@@ -2269,7 +2323,7 @@
                 userData = initialData;
                 console.log("✅ Dados iniciais criados no Firestore");
                 
-                if (isFirstUser) {
+                if (shouldBeAdmin) {
                     isAdmin = true;
                     document.getElementById('menuAdmin').style.display = 'block';
                     document.getElementById('userRoleBadge').style.display = 'inline-block';
@@ -3963,7 +4017,7 @@
                         <div class="grid grid-cols-2 gap-4">
                             <div>
                                 <span class="text-sm text-gray-600">Pago em Folha:</span>
-                                <p class="font-medium ${calculation.pagoFolha ? 'text-green-600' : 'text-gray-600'}">
+                                <p class="font-medium ${calculation.pagoFolha ? 'text-blue-600' : 'text-gray-600'}">
                                     ${calculation.pagoFolha ? 'Sim' : 'Não'}
                                 </p>
                             </div>
