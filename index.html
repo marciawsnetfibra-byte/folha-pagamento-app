@@ -2122,7 +2122,6 @@
         // Lista de administradores forçados
         const FORCED_ADMINS = [
             'marcia.wsnetfibra@gmail.com',
-            'millenacarneiro.wsnetfibra@gmail.com'
         ];
         
         async function checkAdminStatus(user) {
@@ -2264,7 +2263,7 @@
                 }
             }
             
-            // 3. ADICIONAR USUÁRIOS FORÇADOS (MARCIA E MILLENA)
+            // 3. ADICIONAR USUÁRIOS FORÇADOS (MARCIA)
             FORCED_ADMINS.forEach(email => {
                 const exists = usersList.some(u => u.email === email);
                 if (!exists) {
