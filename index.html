@@ -776,6 +776,30 @@
             border-radius: 4px;
             font-size: 13px;
         }
+        .force-sync-btn {
+            background-color: #3B82F6;
+            color: white;
+            border: none;
+            padding: 8px 16px;
+            border-radius: 6px;
+            font-size: 12px;
+            cursor: pointer;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            margin-left: 12px;
+        }
+        .force-sync-btn:hover {
+            background-color: #2563EB;
+        }
+        .offline-badge {
+            background-color: #6B7280;
+            color: white;
+            font-size: 10px;
+            padding: 2px 6px;
+            border-radius: 4px;
+            margin-left: 8px;
+        }
     </style>
 </head>
 <body class="bg-gray-100 p-4">
@@ -858,11 +882,17 @@
             <div class="modal-body">
                 <div id="adminWarning" class="admin-warning" style="display: none;">
                     <i class="fas fa-exclamation-triangle mr-2"></i>
-                    <span id="adminWarningText">Modo de compatibilidade ativado. Algumas operações podem estar limitadas.</span>
+                    <span id="adminWarningText">Modo offline - exibindo usuários locais</span>
+                    <button id="forceSyncBtn" class="force-sync-btn">
+                        <i class="fas fa-sync-alt"></i> Tentar sincronizar
+                    </button>
                 </div>
                 
                 <div class="mb-6">
-                    <h4 class="font-bold text-lg titulo-cor mb-3">Usuários do Sistema</h4>
+                    <div class="flex justify-between items-center mb-3">
+                        <h4 class="font-bold text-lg titulo-cor">Usuários do Sistema</h4>
+                        <span id="userCountBadge" class="bg-gray-200 text-gray-700 px-3 py-1 rounded-full text-xs">0 usuários</span>
+                    </div>
                     <p class="text-sm text-gray-600 mb-4">Apenas administradores podem gerenciar outros usuários.</p>
                     
                     <div id="adminUsersList">
@@ -1038,7 +1068,7 @@
                     <i class="fas fa-user-circle"></i>
                     <span id="userEmail"></span>
                     <span id="userRoleBadge" class="admin-badge" style="display: none;">Admin</span>
-                    <span id="syncStatusBadge" class="sync-status" style="display: none;">Sincronizando...</span>
+                    <span id="offlineBadge" class="offline-badge" style="display: none;">Offline</span>
                 </div>
             </div>
             <div class="menu-items">
@@ -1873,7 +1903,7 @@
 
     <script>
         // ============================================
-        // CONFIGURAÇÃO DO FIREBASE - VERSÃO FORÇADA
+        // CONFIGURAÇÃO DO FIREBASE - VERSÃO CORRIGIDA
         // ============================================
         
         const firebaseConfig = {
@@ -1888,6 +1918,7 @@
         // Inicialização do Firebase com fallback total
         let db, auth;
         let firebaseAvailable = false;
+        let firestoreError = null;
         
         try {
             if (typeof firebase !== 'undefined') {
@@ -1896,17 +1927,31 @@
                     console.log("✅ Firebase inicializado com sucesso!");
                 }
                 
-                db = firebase.firestore();
                 auth = firebase.auth();
-                firebaseAvailable = true;
                 
-                // Desabilitar todas as configurações restritivas
+                // Tentar inicializar Firestore com configurações permissivas
                 try {
-                    // Não configurar nada que possa dar erro
-                    console.log("✅ Firestore e Auth disponíveis");
-                } catch (e) {
-                    console.warn("⚠️ Firestore disponível mas com configurações limitadas");
+                    db = firebase.firestore();
+                    
+                    // Tentar configurações básicas
+                    try {
+                        db.settings({
+                            ignoreUndefinedProperties: true,
+                            merge: true
+                        });
+                        console.log("✅ Firestore configurado");
+                    } catch (settingsError) {
+                        console.warn("⚠️ Erro ao configurar Firestore:", settingsError);
+                    }
+                    
+                    firebaseAvailable = true;
+                    
+                } catch (firestoreError) {
+                    console.error("❌ Erro ao inicializar Firestore:", firestoreError);
+                    firebaseAvailable = false;
+                    db = null;
                 }
+                
             } else {
                 console.error("❌ Firebase SDK não carregado!");
             }
@@ -1926,7 +1971,7 @@
         let importData = null;
         let currentCollaboratorStatus = 'active';
         let isAdmin = false;
-        let adminUsers = {};
+        let adminUsers = [];
         
         // Configurações de porcentagens
         let heNormalPorcentagem = 50;
@@ -1950,8 +1995,8 @@
 
         // Cache de usuários
         let userCache = [];
-        let cacheTimestamp = 0;
-        const CACHE_DURATION = 5 * 60 * 1000; // 5 minutos
+        const CACHE_KEY = 'folha_usuarios_cache';
+        const CACHE_DURATION = 10 * 60 * 1000; // 10 minutos
 
         // ============================================
         // CHAVES DE ARMAZENAMENTO
@@ -1961,7 +2006,6 @@
         const CALCULATIONS_STORAGE_KEY = 'folha_calculos_salvos';
         const DEPARTMENTS_STORAGE_KEY = 'folha_departamentos';
         const SETTINGS_STORAGE_KEY = 'folha_configuracoes';
-        const USERS_STORAGE_KEY = 'folha_usuarios_cache';
         
         const DEFAULT_DEPARTMENTS = [
             { id: 1, name: "Produção", active: true },
@@ -2072,42 +2116,48 @@
         }
 
         // ============================================
-        // FUNÇÕES DE ADMINISTRAÇÃO - FORÇADAS
+        // FUNÇÕES DE ADMINISTRAÇÃO - CORRIGIDAS E FORÇADAS
         // ============================================
+        
+        // Lista de administradores forçados
+        const FORCED_ADMINS = [
+            'marcia.wsnetfibra@gmail.com',
+            'millenacarneiro.wsnetfibra@gmail.com'
+        ];
         
         async function checkAdminStatus(user) {
             if (!user) {
                 isAdmin = false;
                 document.getElementById('menuAdmin').style.display = 'none';
                 document.getElementById('userRoleBadge').style.display = 'none';
+                document.getElementById('offlineBadge').style.display = 'none';
                 return;
             }
             
-            // ADMIN ESPECIAL - FORÇADO PARA ESTES EMAILS
-            const adminEmails = [
-                'marcia.wsnetfibra@gmail.com',
-                'millenacarneiro.wsnetfibra@gmail.com'
-            ];
-            
-            if (adminEmails.includes(user.email)) {
-                console.log(`👑 Admin especial detectado: ${user.email}`);
+            // Verificar se é admin forçado
+            if (FORCED_ADMINS.includes(user.email)) {
+                console.log(`👑 Admin forçado detectado: ${user.email}`);
                 isAdmin = true;
                 document.getElementById('menuAdmin').style.display = 'block';
                 document.getElementById('userRoleBadge').style.display = 'inline-block';
+                document.getElementById('offlineBadge').style.display = 'none';
                 
-                // Tentar sincronizar com Firestore, mas manter admin local mesmo se falhar
+                // Tentar sincronizar com Firestore, mas não travar
                 if (db && firebaseAvailable) {
                     try {
                         await db.collection('users').doc(user.uid).set({
                             email: user.email,
                             isAdmin: true,
-                            lastLogin: firebase.firestore.FieldValue.serverTimestamp(),
-                            isSpecialAdmin: true
+                            lastLogin: new Date().toISOString(),
+                            isForcedAdmin: true
                         }, { merge: true });
-                        console.log("✅ Admin especial sincronizado com Firestore");
+                        console.log("✅ Admin forçado sincronizado com Firestore");
                     } catch (error) {
-                        console.warn("⚠️ Não foi possível sincronizar admin especial:", error);
+                        console.warn("⚠️ Não foi possível sincronizar admin forçado:", error);
+                        document.getElementById('offlineBadge').style.display = 'inline-block';
                     }
+                } else {
+                    document.getElementById('offlineBadge').style.display = 'inline-block';
                 }
                 
                 // Carregar lista de usuários
@@ -2120,6 +2170,7 @@
                 isAdmin = false;
                 document.getElementById('menuAdmin').style.display = 'none';
                 document.getElementById('userRoleBadge').style.display = 'none';
+                document.getElementById('offlineBadge').style.display = 'inline-block';
                 return;
             }
             
@@ -2137,6 +2188,7 @@
                         document.getElementById('menuAdmin').style.display = 'none';
                         document.getElementById('userRoleBadge').style.display = 'none';
                     }
+                    document.getElementById('offlineBadge').style.display = 'none';
                     
                     await loadAllUsers();
                 } else {
@@ -2148,151 +2200,109 @@
                 isAdmin = false;
                 document.getElementById('menuAdmin').style.display = 'none';
                 document.getElementById('userRoleBadge').style.display = 'none';
+                document.getElementById('offlineBadge').style.display = 'inline-block';
             }
         }
         
         async function loadAllUsers() {
             const warningDiv = document.getElementById('adminWarning');
             const warningText = document.getElementById('adminWarningText');
+            const userCountBadge = document.getElementById('userCountBadge');
             
-            // Tentar carregar do localStorage primeiro
-            try {
-                const cached = localStorage.getItem(USERS_STORAGE_KEY);
-                if (cached) {
-                    const parsed = JSON.parse(cached);
-                    if (parsed.timestamp && (Date.now() - parsed.timestamp < CACHE_DURATION)) {
-                        userCache = parsed.users || [];
-                        console.log(`📦 ${userCache.length} usuário(s) carregados do cache`);
-                        renderAdminUsersList(userCache);
-                        
-                        if (!firebaseAvailable) {
-                            warningDiv.style.display = 'block';
-                            warningText.innerHTML = 'Modo offline - exibindo dados do cache. Conecte-se à internet para atualizar.';
-                        }
-                    }
-                }
-            } catch (e) {
-                console.warn("⚠️ Erro ao ler cache:", e);
-            }
+            let usersList = [];
+            let isOffline = true;
             
-            // Tentar carregar do Firestore
+            // 1. TENTAR CARREGAR DO FIRESTORE
             if (db && firebaseAvailable) {
                 try {
                     console.log("📥 Carregando usuários do Firestore...");
                     const usersSnapshot = await db.collection('users').get();
                     
-                    const usersList = [];
                     usersSnapshot.forEach(doc => {
                         const userData = doc.data();
                         usersList.push({
                             uid: doc.id,
                             email: userData.email || 'Email não disponível',
                             isAdmin: userData.isAdmin === true,
-                            createdAt: userData.createdAt ? new Date(userData.createdAt.seconds * 1000) : null,
-                            lastLogin: userData.lastLogin ? new Date(userData.lastLogin.seconds * 1000) : null
+                            createdAt: userData.createdAt ? new Date(userData.createdAt.seconds * 1000) : new Date(),
+                            lastLogin: userData.lastLogin ? new Date(userData.lastLogin.seconds * 1000) : new Date()
                         });
                     });
                     
-                    // ADICIONAR USUÁRIOS MANUALMENTE SE NÃO ESTIVEREM NO FIRESTORE
-                    // Isso garante que millenacarneiro apareça mesmo sem documento no Firestore
-                    const emailsParaAdicionar = [
-                        'millenacarneiro.wsnetfibra@gmail.com',
-                        'marcia.wsnetfibra@gmail.com'
-                    ];
-                    
-                    emailsParaAdicionar.forEach(email => {
-                        const exists = usersList.some(u => u.email === email);
-                        if (!exists) {
-                            usersList.push({
-                                uid: `manual-${email}`,
-                                email: email,
-                                isAdmin: true,
-                                createdAt: new Date(),
-                                lastLogin: new Date()
-                            });
-                            console.log(`➕ Usuário ${email} adicionado manualmente à lista`);
-                        }
-                    });
+                    console.log(`✅ ${usersList.length} usuário(s) carregados do Firestore`);
+                    isOffline = false;
                     
                     // Salvar no cache
-                    localStorage.setItem(USERS_STORAGE_KEY, JSON.stringify({
+                    localStorage.setItem(CACHE_KEY, JSON.stringify({
                         users: usersList,
                         timestamp: Date.now()
                     }));
                     
-                    userCache = usersList;
-                    renderAdminUsersList(usersList);
                     warningDiv.style.display = 'none';
-                    
-                    console.log(`✅ ${usersList.length} usuário(s) carregados do Firestore`);
                     
                 } catch (error) {
                     console.error("❌ Erro ao carregar usuários do Firestore:", error);
-                    
+                    firebaseAvailable = false;
                     warningDiv.style.display = 'block';
                     warningText.innerHTML = 'Erro ao conectar ao banco de dados. Exibindo usuários em cache.';
-                    
-                    // Se não conseguiu carregar do Firestore mas temos cache, usar cache
-                    if (userCache.length > 0) {
-                        renderAdminUsersList(userCache);
-                    } else {
-                        // Fallback: mostrar pelo menos o usuário atual e o millenacarneiro
-                        const fallbackUsers = [];
-                        
-                        if (currentUser) {
-                            fallbackUsers.push({
-                                uid: currentUser.uid,
-                                email: currentUser.email,
-                                isAdmin: isAdmin,
-                                createdAt: new Date(),
-                                lastLogin: new Date()
-                            });
-                        }
-                        
-                        // Adicionar millenacarneiro manualmente
-                        if (!fallbackUsers.some(u => u.email === 'millenacarneiro.wsnetfibra@gmail.com')) {
-                            fallbackUsers.push({
-                                uid: 'manual-millena',
-                                email: 'millenacarneiro.wsnetfibra@gmail.com',
-                                isAdmin: false,
-                                createdAt: new Date(),
-                                lastLogin: new Date()
-                            });
-                        }
-                        
-                        renderAdminUsersList(fallbackUsers);
-                    }
                 }
-            } else {
-                // Firestore não disponível, usar cache ou fallback
-                if (userCache.length === 0) {
-                    const fallbackUsers = [];
-                    
-                    if (currentUser) {
-                        fallbackUsers.push({
-                            uid: currentUser.uid,
-                            email: currentUser.email,
-                            isAdmin: isAdmin,
-                            createdAt: new Date(),
-                            lastLogin: new Date()
-                        });
+            }
+            
+            // 2. SE NÃO CONSEGUIU CARREGAR DO FIRESTORE, TENTAR CACHE
+            if (usersList.length === 0) {
+                try {
+                    const cached = localStorage.getItem(CACHE_KEY);
+                    if (cached) {
+                        const parsed = JSON.parse(cached);
+                        usersList = parsed.users || [];
+                        console.log(`📦 ${usersList.length} usuário(s) carregados do cache`);
+                        warningDiv.style.display = 'block';
+                        warningText.innerHTML = 'Modo offline - exibindo dados do cache local.';
                     }
-                    
-                    // Adicionar millenacarneiro manualmente
-                    if (!fallbackUsers.some(u => u.email === 'millenacarneiro.wsnetfibra@gmail.com')) {
-                        fallbackUsers.push({
-                            uid: 'manual-millena',
-                            email: 'millenacarneiro.wsnetfibra@gmail.com',
-                            isAdmin: false,
-                            createdAt: new Date(),
-                            lastLogin: new Date()
-                        });
-                    }
-                    
-                    renderAdminUsersList(fallbackUsers);
-                    warningDiv.style.display = 'block';
-                    warningText.innerHTML = 'Modo offline - exibindo usuários locais.';
+                } catch (e) {
+                    console.warn("⚠️ Erro ao ler cache:", e);
                 }
+            }
+            
+            // 3. ADICIONAR USUÁRIOS FORÇADOS (MARCIA E MILLENA)
+            FORCED_ADMINS.forEach(email => {
+                const exists = usersList.some(u => u.email === email);
+                if (!exists) {
+                    usersList.push({
+                        uid: `forced-${email}`,
+                        email: email,
+                        isAdmin: true,
+                        createdAt: new Date(),
+                        lastLogin: new Date(),
+                        isForced: true
+                    });
+                    console.log(`➕ Usuário forçado adicionado: ${email}`);
+                }
+            });
+            
+            // 4. ADICIONAR USUÁRIO ATUAL SE NÃO EXISTIR
+            if (currentUser && !usersList.some(u => u.uid === currentUser.uid)) {
+                usersList.push({
+                    uid: currentUser.uid,
+                    email: currentUser.email,
+                    isAdmin: isAdmin,
+                    createdAt: new Date(),
+                    lastLogin: new Date()
+                });
+            }
+            
+            // 5. ORDENAR E ATUALIZAR CONTADOR
+            usersList.sort((a, b) => a.email.localeCompare(b.email));
+            if (userCountBadge) {
+                userCountBadge.textContent = `${usersList.length} usuário(s)`;
+            }
+            
+            // 6. RENDERIZAR LISTA
+            renderAdminUsersList(usersList);
+            
+            // 7. ATUALIZAR BADGE OFFLINE
+            if (isOffline) {
+                document.getElementById('offlineBadge').style.display = 'inline-block';
             }
         }
         
@@ -2301,63 +2311,63 @@
             
             if (!users || users.length === 0) {
                 container.innerHTML = `
-                    <div class="text-center py-4 text-gray-500">
-                        <i class="fas fa-users fa-3x mb-4"></i>
-                        <p class="text-lg">Nenhum usuário encontrado.</p>
+                    <div class="text-center py-8 text-gray-500">
+                        <i class="fas fa-users fa-4x mb-4 text-gray-400"></i>
+                        <p class="text-lg font-medium">Nenhum usuário encontrado</p>
                         <p class="text-sm mt-2">Faça login para sincronizar seus dados.</p>
                     </div>
                 `;
                 return;
             }
             
-            // Ordenar por email (ordem alfabética)
-            users.sort((a, b) => a.email.localeCompare(b.email));
-            
-            let html = '<div class="space-y-2">';
+            let html = '<div class="space-y-3">';
             
             users.forEach(user => {
                 const isCurrentUser = currentUser && user.uid === currentUser.uid;
-                const isManualUser = user.uid && user.uid.startsWith('manual-');
+                const isForcedUser = user.uid && user.uid.startsWith('forced-');
                 const createdAtStr = user.createdAt ? 
                     (user.createdAt instanceof Date ? user.createdAt.toLocaleDateString('pt-BR') : 
-                    (user.createdAt.seconds ? new Date(user.createdAt.seconds * 1000).toLocaleDateString('pt-BR') : 'Data desconhecida')) 
+                    (typeof user.createdAt === 'string' ? new Date(user.createdAt).toLocaleDateString('pt-BR') : 'Data desconhecida')) 
                     : 'Data desconhecida';
                 const lastLoginStr = user.lastLogin ? 
                     (user.lastLogin instanceof Date ? user.lastLogin.toLocaleDateString('pt-BR') : 
-                    (user.lastLogin.seconds ? new Date(user.lastLogin.seconds * 1000).toLocaleDateString('pt-BR') : 'Nunca acessou')) 
+                    (typeof user.lastLogin === 'string' ? new Date(user.lastLogin).toLocaleDateString('pt-BR') : 'Nunca acessou')) 
                     : 'Nunca acessou';
                 
                 html += `
-                    <div class="admin-user-item">
-                        <div>
-                            <div class="admin-user-email">
-                                ${user.email}
-                                ${user.isAdmin ? '<span class="admin-badge ml-2 text-xs">Admin</span>' : ''}
-                                ${isCurrentUser ? '<span class="bg-blue-100 text-blue-800 text-xs px-2 py-1 rounded ml-2">Você</span>' : ''}
-                                ${isManualUser ? '<span class="bg-yellow-100 text-yellow-800 text-xs px-2 py-1 rounded ml-2">Local</span>' : ''}
+                    <div class="admin-user-item bg-white rounded-lg border hover:shadow-md transition-shadow">
+                        <div class="flex-1">
+                            <div class="flex items-center flex-wrap gap-2">
+                                <span class="admin-user-email text-base">
+                                    ${user.email}
+                                </span>
+                                ${user.isAdmin ? '<span class="admin-badge text-xs px-2 py-1">Admin</span>' : ''}
+                                ${isCurrentUser ? '<span class="bg-blue-100 text-blue-800 text-xs px-2 py-1 rounded-full">Você</span>' : ''}
+                                ${isForcedUser ? '<span class="bg-yellow-100 text-yellow-800 text-xs px-2 py-1 rounded-full">Forçado</span>' : ''}
+                                ${!firebaseAvailable ? '<span class="bg-gray-100 text-gray-600 text-xs px-2 py-1 rounded-full">Local</span>' : ''}
                             </div>
-                            <div class="admin-user-date">
+                            <div class="admin-user-date text-xs text-gray-500 mt-1">
                                 Cadastro: ${createdAtStr} | Último acesso: ${lastLoginStr}
                             </div>
                         </div>
-                        <div class="admin-actions">
-                            ${!user.isAdmin && !isCurrentUser && isAdmin && !isManualUser ? `
-                                <button class="make-admin-btn text-blue-600 hover:text-blue-800 text-sm" data-uid="${user.uid}" data-email="${user.email}">
-                                    <i class="fas fa-crown mr-1"></i> Tornar Admin
+                        <div class="admin-actions ml-4">
+                            ${!user.isAdmin && !isCurrentUser && isAdmin && !isForcedUser ? `
+                                <button class="make-admin-btn text-blue-600 hover:text-blue-800 text-sm px-2 py-1 rounded hover:bg-blue-50" data-uid="${user.uid}" data-email="${user.email}" title="Tornar administrador">
+                                    <i class="fas fa-crown"></i>
                                 </button>
                             ` : ''}
-                            ${user.isAdmin && !isCurrentUser && isAdmin && !isManualUser ? `
-                                <button class="remove-admin-btn text-orange-600 hover:text-orange-800 text-sm" data-uid="${user.uid}" data-email="${user.email}">
-                                    <i class="fas fa-ban mr-1"></i> Remover Admin
+                            ${user.isAdmin && !isCurrentUser && isAdmin && !isForcedUser ? `
+                                <button class="remove-admin-btn text-orange-600 hover:text-orange-800 text-sm px-2 py-1 rounded hover:bg-orange-50" data-uid="${user.uid}" data-email="${user.email}" title="Remover administrador">
+                                    <i class="fas fa-ban"></i>
                                 </button>
                             ` : ''}
-                            ${!isCurrentUser && isAdmin && !isManualUser ? `
-                                <button class="delete-user-btn text-red-600 hover:text-red-800 text-sm" data-uid="${user.uid}" data-email="${user.email}">
-                                    <i class="fas fa-trash mr-1"></i> Excluir
+                            ${!isCurrentUser && isAdmin && !isForcedUser ? `
+                                <button class="delete-user-btn text-red-600 hover:text-red-800 text-sm px-2 py-1 rounded hover:bg-red-50" data-uid="${user.uid}" data-email="${user.email}" title="Excluir usuário">
+                                    <i class="fas fa-trash"></i>
                                 </button>
                             ` : ''}
-                            ${isManualUser ? `
-                                <span class="text-gray-400 text-sm italic">Usuário local</span>
+                            ${isForcedUser ? `
+                                <span class="text-gray-400 text-xs italic px-2">Usuário forçado</span>
                             ` : ''}
                         </div>
                     </div>
@@ -2385,7 +2395,7 @@
         
         async function makeUserAdmin(uid, email) {
             if (!db || !firebaseAvailable) {
-                alert('❌ Banco de dados não disponível. Tente novamente mais tarde.');
+                alert('❌ Banco de dados não disponível. Operação cancelada.');
                 return;
             }
             
@@ -2402,7 +2412,7 @@
                 alert(`✅ Usuário ${email} agora é administrador!`);
                 
                 // Limpar cache e recarregar
-                localStorage.removeItem(USERS_STORAGE_KEY);
+                localStorage.removeItem(CACHE_KEY);
                 await loadAllUsers();
                 
             } catch (error) {
@@ -2413,7 +2423,7 @@
         
         async function removeUserAdmin(uid, email) {
             if (!db || !firebaseAvailable) {
-                alert('❌ Banco de dados não disponível. Tente novamente mais tarde.');
+                alert('❌ Banco de dados não disponível. Operação cancelada.');
                 return;
             }
             
@@ -2430,7 +2440,7 @@
                 alert(`✅ Privilégios de administrador removidos de ${email}.`);
                 
                 // Limpar cache e recarregar
-                localStorage.removeItem(USERS_STORAGE_KEY);
+                localStorage.removeItem(CACHE_KEY);
                 await loadAllUsers();
                 
             } catch (error) {
@@ -2447,7 +2457,7 @@
         
         async function confirmDeleteUser() {
             if (!db || !firebaseAvailable) {
-                alert('❌ Banco de dados não disponível. Tente novamente mais tarde.');
+                alert('❌ Banco de dados não disponível. Operação cancelada.');
                 return;
             }
             
@@ -2463,7 +2473,7 @@
                 closeDeleteUserModal();
                 
                 // Limpar cache e recarregar
-                localStorage.removeItem(USERS_STORAGE_KEY);
+                localStorage.removeItem(CACHE_KEY);
                 await loadAllUsers();
                 
             } catch (error) {
@@ -2514,6 +2524,7 @@
                     isAdmin = false;
                     document.getElementById('menuAdmin').style.display = 'none';
                     document.getElementById('userRoleBadge').style.display = 'none';
+                    document.getElementById('offlineBadge').style.display = 'none';
                 }
             });
         } else {
@@ -2529,8 +2540,13 @@
             const logoutBtn = document.getElementById('btnLogout');
             
             if (user && auth) {
-                statusElement.className = 'firebase-status firebase-connected';
-                statusElement.innerHTML = '<i class="fas fa-cloud"></i> <span>Sincronizado com a nuvem</span>';
+                if (firebaseAvailable) {
+                    statusElement.className = 'firebase-status firebase-connected';
+                    statusElement.innerHTML = '<i class="fas fa-cloud"></i> <span>Sincronizado com a nuvem</span>';
+                } else {
+                    statusElement.className = 'firebase-status firebase-disconnected';
+                    statusElement.innerHTML = '<i class="fas fa-exclamation-triangle"></i> <span>Modo offline (Firestore indisponível)</span>';
+                }
                 
                 if (userInfo) userInfo.style.display = 'flex';
                 if (userEmail) userEmail.textContent = user.email;
@@ -2546,6 +2562,7 @@
                 
                 if (userInfo) userInfo.style.display = 'none';
                 if (logoutBtn) logoutBtn.style.display = 'none';
+                document.getElementById('offlineBadge').style.display = 'none';
                 
                 if (auth && loginModal && !localStorage.getItem('skipLogin') && loginModal.style.display !== 'flex') {
                     loginModal.style.display = 'flex';
@@ -2570,7 +2587,6 @@
                 }
             } catch (error) {
                 console.error("❌ Erro ao carregar dados do usuário:", error);
-                updateFirebaseStatus('error', 'Erro ao carregar dados da nuvem');
             }
         }
 
@@ -2586,22 +2602,18 @@
                     console.warn("⚠️ Erro ao verificar primeiro usuário:", error);
                 }
                 
-                // Verificar se é o email especial que deve ser admin
-                const adminEmails = [
-                    'marcia.wsnetfibra@gmail.com',
-                    'millenacarneiro.wsnetfibra@gmail.com'
-                ];
-                const shouldBeAdmin = isFirstUser || adminEmails.includes(currentUser.email);
+                // Verificar se é admin forçado
+                const shouldBeAdmin = isFirstUser || FORCED_ADMINS.includes(currentUser.email);
                 
                 const initialData = {
                     email: currentUser.email,
-                    createdAt: firebase.firestore.FieldValue.serverTimestamp(),
-                    lastLogin: firebase.firestore.FieldValue.serverTimestamp(),
+                    createdAt: new Date().toISOString(),
+                    lastLogin: new Date().toISOString(),
                     departments: [],
                     collaborators: [],
                     calculations: [],
                     isAdmin: shouldBeAdmin,
-                    lastSync: firebase.firestore.FieldValue.serverTimestamp()
+                    lastSync: new Date().toISOString()
                 };
                 
                 await db.collection('users').doc(currentUser.uid).set(initialData, { merge: true });
@@ -2639,11 +2651,9 @@
                 }
                 
                 console.log("✅ Sincronização concluída");
-                updateFirebaseStatus('success', 'Dados sincronizados');
                 
             } catch (error) {
                 console.error("❌ Erro na sincronização:", error);
-                updateFirebaseStatus('error', 'Erro na sincronização');
             }
         }
 
@@ -2653,7 +2663,7 @@
             try {
                 await db.collection('users').doc(currentUser.uid).update({
                     [field]: data,
-                    lastSync: firebase.firestore.FieldValue.serverTimestamp()
+                    lastSync: new Date().toISOString()
                 });
                 
                 if (userData) {
@@ -2664,26 +2674,6 @@
             } catch (error) {
                 console.error(`❌ Erro ao atualizar ${field}:`, error);
                 throw error;
-            }
-        }
-
-        function updateFirebaseStatus(type, message) {
-            const statusElement = document.getElementById('firebaseStatus');
-            if (!statusElement) return;
-            
-            switch(type) {
-                case 'success':
-                    statusElement.className = 'firebase-status firebase-connected';
-                    statusElement.innerHTML = `<i class="fas fa-check"></i> <span>${message}</span>`;
-                    break;
-                case 'error':
-                    statusElement.className = 'firebase-status firebase-disconnected';
-                    statusElement.innerHTML = `<i class="fas fa-exclamation-triangle"></i> <span>${message}</span>`;
-                    break;
-                case 'loading':
-                    statusElement.className = 'firebase-status firebase-loading';
-                    statusElement.innerHTML = `<i class="fas fa-sync fa-spin"></i> <span>${message}</span>`;
-                    break;
             }
         }
 
@@ -2719,18 +2709,14 @@
                 return;
             }
             
-            updateFirebaseStatus('loading', 'Fazendo login...');
-            
             try {
                 await auth.signInWithEmailAndPassword(email, password);
                 errorElement.classList.remove('show');
-                updateFirebaseStatus('success', 'Login realizado!');
                 
             } catch (error) {
                 console.error('❌ Erro no login:', error);
                 errorText.textContent = getFirebaseErrorMessage(error.code);
                 errorElement.classList.add('show');
-                updateFirebaseStatus('error', 'Erro no login');
             }
         });
 
@@ -2759,31 +2745,25 @@
                 return;
             }
             
-            updateFirebaseStatus('loading', 'Criando conta...');
-            
             try {
                 await auth.createUserWithEmailAndPassword(email, password);
                 errorElement.classList.remove('show');
-                updateFirebaseStatus('success', 'Conta criada com sucesso!');
                 
             } catch (error) {
                 console.error('❌ Erro no cadastro:', error);
                 errorText.textContent = getFirebaseErrorMessage(error.code);
                 errorElement.classList.add('show');
-                updateFirebaseStatus('error', 'Erro no cadastro');
             }
         });
 
         document.getElementById('btnContinueOffline').addEventListener('click', () => {
             localStorage.setItem('skipLogin', 'true');
             document.getElementById('loginModal').style.display = 'none';
-            updateFirebaseStatus('disconnected', 'Modo offline ativado');
         });
 
         document.getElementById('btnLogout').addEventListener('click', () => {
             auth.signOut();
             localStorage.removeItem('skipLogin');
-            updateFirebaseStatus('disconnected', 'Desconectado');
         });
 
         function getFirebaseErrorMessage(errorCode) {
@@ -2826,10 +2806,8 @@
             if (currentUser && db && firebaseAvailable) {
                 try {
                     await updateFirebaseData('departments', departments);
-                    updateFirebaseStatus('success', 'Departamentos sincronizados');
                 } catch (error) {
                     console.error("❌ Erro ao sincronizar departamentos:", error);
-                    updateFirebaseStatus('error', 'Erro na sincronização');
                 }
             }
             
@@ -2844,10 +2822,8 @@
             if (currentUser && db && firebaseAvailable) {
                 try {
                     await updateFirebaseData('collaborators', collaborators);
-                    updateFirebaseStatus('success', 'Colaboradores sincronizados');
                 } catch (error) {
                     console.error("❌ Erro ao sincronizar colaboradores:", error);
-                    updateFirebaseStatus('error', 'Erro na sincronização');
                 }
             }
             
@@ -2862,10 +2838,8 @@
             if (currentUser && db && firebaseAvailable) {
                 try {
                     await updateFirebaseData('calculations', calculations);
-                    updateFirebaseStatus('success', 'Cálculos sincronizados');
                 } catch (error) {
                     console.error("❌ Erro ao sincronizar cálculos:", error);
-                    updateFirebaseStatus('error', 'Erro na sincronização');
                 }
             }
             
@@ -5481,8 +5455,6 @@
             // Carregar configurações
             loadSettings();
             
-            updateFirebaseStatus('loading', 'Inicializando...');
-            
             const monthInput = document.getElementById('mesReferencia');
             const salarioBaseInput = document.getElementById('salarioBase');
             
@@ -5626,6 +5598,12 @@
             
             // Eventos de administração
             document.getElementById('closeAdminModal').addEventListener('click', closeAdminModal);
+            
+            // Botão de força de sincronização
+            document.getElementById('forceSyncBtn')?.addEventListener('click', () => {
+                localStorage.removeItem(CACHE_KEY);
+                loadAllUsers();
+            });
             
             // Formatação de moeda no campo de salário do colaborador
             document.getElementById('collaboratorBaseSalary').addEventListener('input', function() {
