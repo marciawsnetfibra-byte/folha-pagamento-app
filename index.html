@@ -235,7 +235,7 @@
             width: 100%;
         }
         
-        /* MODAL DE LOGIN - COM FUNDO ESCURO SOBREPOSTO */
+        /* MODAL DE LOGIN - FUNDO ESCURO SOBREPOSTO */
         .login-modal {
             position: fixed;
             top: 0;
@@ -265,23 +265,7 @@
             z-index: 10001;
         }
         
-        /* OVERLAY PARA OUTROS MODAIS */
-        .modal-overlay {
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background-color: rgba(0, 0, 0, 0.7);
-            backdrop-filter: blur(5px);
-            z-index: 1999;
-            display: none;
-        }
-        
-        .modal-overlay.active {
-            display: block;
-        }
-        
+        /* MODAIS DE CONFIGURAÇÃO E ADMINISTRAÇÃO - CORRIGIDOS */
         .modal {
             display: none;
             position: fixed;
@@ -289,6 +273,8 @@
             left: 0;
             width: 100%;
             height: 100%;
+            background-color: rgba(0, 0, 0, 0.7);
+            backdrop-filter: blur(5px);
             align-items: center;
             justify-content: center;
             z-index: 2000;
@@ -305,9 +291,21 @@
             max-width: 800px;
             max-height: 90vh;
             overflow-y: auto;
-            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
             position: relative;
             z-index: 2001;
+            animation: modalFadeIn 0.3s ease;
+        }
+        
+        @keyframes modalFadeIn {
+            from {
+                opacity: 0;
+                transform: scale(0.95);
+            }
+            to {
+                opacity: 1;
+                transform: scale(1);
+            }
         }
         
         .modal-header {
@@ -332,6 +330,7 @@
             font-size: 1.5rem;
             cursor: pointer;
             color: #6b7280;
+            transition: color 0.2s;
         }
         
         .modal-close:hover {
@@ -1229,7 +1228,7 @@
                 </div>
             </div>
 
-            <!-- Modal de Login - AGORA COM FUNDO ESCURO SOBREPOSTO -->
+            <!-- Modal de Login -->
             <div id="loginModal" class="login-modal">
                 <div class="login-box">
                     <h2 class="text-2xl font-bold titulo-cor mb-2">Acesso ao Sistema</h2>
@@ -1862,7 +1861,7 @@
         </div>
     </div>
 
-    <!-- MODAIS (MANTIDOS IGUAIS) -->
+    <!-- MODAIS -->
     <div class="modal" id="collaboratorModal">
         <div class="modal-content">
             <div class="modal-header">
@@ -2059,7 +2058,7 @@
 
     <script>
         // ============================================
-        // CONFIGURAÇÃO DO FIREBASE - VERSÃO CORRIGIDA
+        // CONFIGURAÇÃO DO FIREBASE
         // ============================================
         
         const firebaseConfig = {
@@ -2071,10 +2070,9 @@
             appId: "1:482792411975:web:c884c56ce5a38313d33262"
         };
 
-        // Inicialização do Firebase com fallback total
+        // Inicialização do Firebase
         let db, auth;
         let firebaseAvailable = false;
-        let firestoreError = null;
         
         try {
             if (typeof firebase !== 'undefined') {
@@ -2085,11 +2083,9 @@
                 
                 auth = firebase.auth();
                 
-                // Tentar inicializar Firestore com configurações permissivas
                 try {
                     db = firebase.firestore();
                     
-                    // Tentar configurações básicas
                     try {
                         db.settings({
                             ignoreUndefinedProperties: true,
@@ -2127,7 +2123,6 @@
         let importData = null;
         let currentCollaboratorStatus = 'active';
         let isAdmin = false;
-        let adminUsers = [];
         
         // Configurações de porcentagens
         let heNormalPorcentagem = 50;
@@ -2152,7 +2147,7 @@
         // Cache de usuários
         let userCache = [];
         const CACHE_KEY = 'folha_usuarios_cache';
-        const CACHE_DURATION = 10 * 60 * 1000; // 10 minutos
+        const CACHE_DURATION = 10 * 60 * 1000;
 
         // ============================================
         // CHAVES DE ARMAZENAMENTO
@@ -2163,7 +2158,7 @@
         const DEPARTMENTS_STORAGE_KEY = 'folha_departamentos';
         const SETTINGS_STORAGE_KEY = 'folha_configuracoes';
         
-        // SEM DADOS DE TESTE - Array vazio
+        // SEM DADOS DE TESTE
         const DEFAULT_DEPARTMENTS = [];
 
         // ============================================
@@ -2190,7 +2185,6 @@
                 }
             }
             
-            // Atualizar campos de configuração
             const heNormalInput = document.getElementById('heNormalPorcentagem');
             const heSobreavisoInput = document.getElementById('heSobreavisoPorcentagem');
             const adicionalNoturnoInput = document.getElementById('adicionalNoturnoPorcentagem');
@@ -2199,7 +2193,6 @@
             if (heSobreavisoInput) heSobreavisoInput.value = heSobreavisoPorcentagem;
             if (adicionalNoturnoInput) adicionalNoturnoInput.value = adicionalNoturnoPorcentagem;
             
-            // Atualizar displays
             updatePercentageDisplays();
         }
         
@@ -2265,7 +2258,6 @@
         // FUNÇÕES DE ADMINISTRAÇÃO
         // ============================================
         
-        // Lista de administradores forçados
         const FORCED_ADMINS = [
             'marcia.wsnetfibra@gmail.com',
         ];
@@ -2279,7 +2271,6 @@
                 return;
             }
             
-            // Verificar se é admin forçado
             if (FORCED_ADMINS.includes(user.email)) {
                 console.log(`👑 Admin forçado detectado: ${user.email}`);
                 isAdmin = true;
@@ -2287,7 +2278,6 @@
                 document.getElementById('userRoleBadgeSide').style.display = 'inline-block';
                 document.getElementById('offlineBadgeSide').style.display = 'none';
                 
-                // Tentar sincronizar com Firestore, mas não travar
                 if (db && firebaseAvailable) {
                     try {
                         await db.collection('users').doc(user.uid).set({
@@ -2305,12 +2295,10 @@
                     document.getElementById('offlineBadgeSide').style.display = 'inline-block';
                 }
                 
-                // Carregar lista de usuários
                 await loadAllUsers();
                 return;
             }
             
-            // Para outros usuários, verificar normalmente
             if (!db || !firebaseAvailable) {
                 isAdmin = false;
                 document.getElementById('menuAdmin').style.display = 'none';
@@ -2357,7 +2345,6 @@
             let usersList = [];
             let isOffline = true;
             
-            // 1. TENTAR CARREGAR DO FIRESTORE
             if (db && firebaseAvailable) {
                 try {
                     console.log("📥 Carregando usuários do Firestore...");
@@ -2377,7 +2364,6 @@
                     console.log(`✅ ${usersList.length} usuário(s) carregados do Firestore`);
                     isOffline = false;
                     
-                    // Salvar no cache
                     localStorage.setItem(CACHE_KEY, JSON.stringify({
                         users: usersList,
                         timestamp: Date.now()
@@ -2393,7 +2379,6 @@
                 }
             }
             
-            // 2. SE NÃO CONSEGUIU CARREGAR DO FIRESTORE, TENTAR CACHE
             if (usersList.length === 0) {
                 try {
                     const cached = localStorage.getItem(CACHE_KEY);
@@ -2409,7 +2394,6 @@
                 }
             }
             
-            // 3. ADICIONAR USUÁRIOS FORÇADOS (MARCIA)
             FORCED_ADMINS.forEach(email => {
                 const exists = usersList.some(u => u.email === email);
                 if (!exists) {
@@ -2425,7 +2409,6 @@
                 }
             });
             
-            // 4. ADICIONAR USUÁRIO ATUAL SE NÃO EXISTIR
             if (currentUser && !usersList.some(u => u.uid === currentUser.uid)) {
                 usersList.push({
                     uid: currentUser.uid,
@@ -2436,16 +2419,13 @@
                 });
             }
             
-            // 5. ORDENAR E ATUALIZAR CONTADOR
             usersList.sort((a, b) => a.email.localeCompare(b.email));
             if (userCountBadge) {
                 userCountBadge.textContent = `${usersList.length} usuário(s)`;
             }
             
-            // 6. RENDERIZAR LISTA
             renderAdminUsersList(usersList);
             
-            // 7. ATUALIZAR BADGE OFFLINE
             if (isOffline) {
                 document.getElementById('offlineBadgeSide').style.display = 'inline-block';
             }
@@ -2522,7 +2502,6 @@
             html += '</div>';
             container.innerHTML = html;
             
-            // Adicionar event listeners apenas se for admin e Firestore disponível
             if (isAdmin && firebaseAvailable) {
                 document.querySelectorAll('.make-admin-btn').forEach(btn => {
                     btn.addEventListener('click', () => makeUserAdmin(btn.dataset.uid, btn.dataset.email));
@@ -2556,7 +2535,6 @@
                 
                 alert(`✅ Usuário ${email} agora é administrador!`);
                 
-                // Limpar cache e recarregar
                 localStorage.removeItem(CACHE_KEY);
                 await loadAllUsers();
                 
@@ -2584,7 +2562,6 @@
                 
                 alert(`✅ Privilégios de administrador removidos de ${email}.`);
                 
-                // Limpar cache e recarregar
                 localStorage.removeItem(CACHE_KEY);
                 await loadAllUsers();
                 
@@ -2617,7 +2594,6 @@
                 alert(`✅ Acesso do usuário ${email} excluído com sucesso!`);
                 closeDeleteUserModal();
                 
-                // Limpar cache e recarregar
                 localStorage.removeItem(CACHE_KEY);
                 await loadAllUsers();
                 
@@ -2657,10 +2633,7 @@
                     document.getElementById('userEmailSide').textContent = user.email;
                     document.getElementById('btnLogout').style.display = 'flex';
                     
-                    // Verificar status de admin
                     await checkAdminStatus(user);
-                    
-                    // Carregar dados do usuário
                     await loadUserData();
                     
                 } else {
@@ -2694,7 +2667,6 @@
                     statusElement.innerHTML = '<i class="fas fa-exclamation-triangle"></i> <span>Modo offline (Firestore indisponível)</span>';
                 }
                 
-                // Fechar modal de login se estiver aberto
                 if (loginModal && loginModal.classList.contains('active')) {
                     loginModal.classList.remove('active');
                 }
@@ -2703,7 +2675,6 @@
                 statusElement.className = 'firebase-status firebase-disconnected';
                 statusElement.innerHTML = '<i class="fas fa-laptop"></i> <span>Modo offline (apenas local)</span>';
                 
-                // Mostrar modal de login se necessário
                 if (auth && !localStorage.getItem('skipLogin') && !loginModal.classList.contains('active')) {
                     loginModal.classList.add('active');
                 }
@@ -2742,7 +2713,6 @@
                     console.warn("⚠️ Erro ao verificar primeiro usuário:", error);
                 }
                 
-                // Verificar se é admin forçado
                 const shouldBeAdmin = isFirstUser || FORCED_ADMINS.includes(currentUser.email);
                 
                 const initialData = {
@@ -2990,7 +2960,6 @@
         
         function getDepartments() {
             const savedData = localStorage.getItem(DEPARTMENTS_STORAGE_KEY);
-            // Retorna array vazio se não houver dados salvos
             return savedData ? JSON.parse(savedData) : [];
         }
         
@@ -3066,13 +3035,11 @@
                 value = String(value);
             }
             
-            // Remove "R$", espaços e substitui vírgula por ponto
             let cleanValue = value.replace(/R\$\s*/g, '')
                                  .replace(/\./g, '')
                                  .replace(/,/g, '.')
                                  .trim();
             
-            // Se começar com ponto, adiciona zero na frente
             if (cleanValue.startsWith('.')) {
                 cleanValue = '0' + cleanValue;
             }
@@ -3086,7 +3053,6 @@
                 return value.toFixed(2).replace('.', ',').replace(/\B(?=(\d{3})+(?!\d))/g, ".");
             }
             
-            // Se for string, converte para número e formata
             const numValue = parseCurrencyBR(value);
             return numValue.toFixed(2).replace('.', ',').replace(/\B(?=(\d{3})+(?!\d))/g, ".");
         }
@@ -3129,7 +3095,6 @@
             
             const headers = rows[0].map(h => String(h || '').toLowerCase().trim());
             
-            // Mapear colunas necessárias
             const nameIndex = headers.findIndex(h => h.includes('nome'));
             const deptIndex = headers.findIndex(h => h.includes('departamento') || h.includes('depto') || h.includes('setor'));
             const salaryIndex = headers.findIndex(h => h.includes('salario') || h.includes('salário') || h.includes('remunera') || h.includes('vencimento'));
@@ -3157,7 +3122,6 @@
                 const periculosidadeRaw = pericIndex !== -1 ? row[pericIndex] : 'Não';
                 const hoursRaw = hoursIndex !== -1 ? row[hoursIndex] : '220';
                 
-                // Processar salário
                 const salaryValue = parseCurrencyBR(salaryRaw);
                 if (salaryValue <= 0) {
                     errors.push(`Linha ${i + 1}: Salário inválido para ${name} (${salaryRaw})`);
@@ -3166,10 +3130,8 @@
                 
                 const salaryFormatted = formatCurrencyForStorage(salaryValue);
                 
-                // Processar periculosidade
                 const hasPericulosidade = pericIndex !== -1 ? parseBoolean(periculosidadeRaw) : false;
                 
-                // Processar horas
                 let divisor = 220;
                 if (hoursIndex !== -1) {
                     const hoursStr = String(hoursRaw).replace(/[^\d]/g, '');
@@ -3223,7 +3185,6 @@
             const tableHeader = document.getElementById('previewTableHeader');
             const tableBody = document.getElementById('previewTableBody');
             
-            // Estatísticas
             statsDiv.innerHTML = `
                 <div class="stat-card">
                     <div class="stat-number">${successCount}</div>
@@ -3243,7 +3204,6 @@
                 </div>
             `;
             
-            // Cabeçalho da tabela
             tableHeader.innerHTML = `
                 <tr>
                     <th>Nome</th>
@@ -3254,7 +3214,6 @@
                 </tr>
             `;
             
-            // Corpo da tabela (mostrar apenas os primeiros 10)
             let bodyHtml = '';
             const previewData = data.slice(0, 10);
             
@@ -3310,7 +3269,6 @@
             let newCollaborators = 0;
             let updatedCollaborators = 0;
             
-            // Criar departamentos se não existirem
             const departmentNames = [...new Set(importData.map(item => item.department))];
             
             departmentNames.forEach(deptName => {
@@ -3331,17 +3289,14 @@
                 }
             });
             
-            // Salvar departamentos atualizados
             await saveDepartments(departments);
             
-            // Importar colaboradores
             importData.forEach(item => {
                 const existingCollaborator = collaborators.find(c => 
                     c.name.toLowerCase() === item.name.toLowerCase()
                 );
                 
                 if (existingCollaborator) {
-                    // Atualizar colaborador existente
                     existingCollaborator.department = item.department;
                     existingCollaborator.baseSalary = item.baseSalary;
                     existingCollaborator.baseSalaryValue = item.baseSalaryValue;
@@ -3351,7 +3306,6 @@
                     existingCollaborator.active = true;
                     updatedCollaborators++;
                 } else {
-                    // Criar novo colaborador
                     collaborators.push({
                         id: Date.now() + Math.random(),
                         name: item.name,
@@ -3373,13 +3327,11 @@
             
             await saveCollaborators(collaborators);
             
-            // Atualizar selects
             updateDepartmentSelect();
             updateCollaboratorSelect();
             updateCollaboratorFilterSelect();
             renderCollaboratorsTable(currentCollaboratorStatus);
             
-            // Mensagem de sucesso
             const message = `
                 <div class="success-message">
                     <i class="fas fa-check-circle"></i>
@@ -3654,7 +3606,6 @@
                 reportDepartment.innerHTML = '<option value="">Todos os departamentos</option>';
             }
             
-            // Ordenar departamentos por nome (ordem alfabética)
             const sortedDepartments = [...departments]
                 .filter(dept => dept.active)
                 .sort((a, b) => a.name.localeCompare(b.name, 'pt-BR'));
@@ -3693,7 +3644,6 @@
                 reportSelect.innerHTML = '<option value="">Todos os colaboradores</option>';
             }
             
-            // Ordenar colaboradores por nome (ordem alfabética)
             const sortedCollaborators = [...collaborators]
                 .filter(collaborator => collaborator.active === true)
                 .sort((a, b) => a.name.localeCompare(b.name, 'pt-BR'));
@@ -3728,7 +3678,6 @@
                 return;
             }
             
-            // Ordenar departamentos por nome (ordem alfabética)
             const sortedDepartments = [...departments].sort((a, b) => a.name.localeCompare(b.name, 'pt-BR'));
             
             let html = `
@@ -3809,9 +3758,8 @@
             const periculosidade = document.getElementById('collaboratorPericulosidade').checked;
             const insalubridade = document.getElementById('collaboratorInsalubridade').checked;
             
-            // NOVO: Capturar status do colaborador
             const statusRadios = document.getElementsByName('collaboratorStatus');
-            let collaboratorStatus = 'active'; // padrão
+            let collaboratorStatus = 'active';
             for (let radio of statusRadios) {
                 if (radio.checked) {
                     collaboratorStatus = radio.value;
@@ -3854,7 +3802,7 @@
                     workHours: workHours,
                     periculosidade: periculosidade,
                     insalubridade: insalubridade,
-                    active: active, // NOVO: usar status selecionado
+                    active: active,
                     updatedAt: new Date().toISOString()
                 };
                 
@@ -3873,7 +3821,7 @@
                     workHours: workHours,
                     periculosidade: periculosidade,
                     insalubridade: insalubridade,
-                    active: active, // NOVO: usar status selecionado
+                    active: active,
                     createdAt: new Date().toISOString(),
                     updatedAt: new Date().toISOString()
                 };
@@ -3902,7 +3850,6 @@
             document.getElementById('collaboratorPericulosidade').checked = false;
             document.getElementById('collaboratorInsalubridade').checked = false;
             
-            // NOVO: Resetar status para Ativo
             document.getElementById('collaboratorStatusActive').checked = true;
             
             document.getElementById('collaboratorModalTitle').textContent = "Cadastrar Novo Colaborador";
@@ -3916,7 +3863,6 @@
             const currentSelection = select.value;
             select.innerHTML = '<option value="">-- Selecione um colaborador --</option>';
             
-            // Ordenar colaboradores por nome (ordem alfabética)
             const sortedCollaborators = [...collaborators]
                 .filter(collaborator => collaborator.active === true)
                 .sort((a, b) => a.name.localeCompare(b.name, 'pt-BR'));
@@ -3975,7 +3921,6 @@
                 return;
             }
             
-            // Ordenar colaboradores por nome (ordem alfabética)
             const sortedCollaborators = [...filteredCollaborators].sort((a, b) => a.name.localeCompare(b.name, 'pt-BR'));
             
             let html = `
@@ -4048,7 +3993,6 @@
             
             updateStatusButtons(status);
             
-            // Event listeners para editar
             document.querySelectorAll('.edit-collaborator').forEach(button => {
                 button.addEventListener('click', function() {
                     const id = parseInt(this.getAttribute('data-id'));
@@ -4056,7 +4000,6 @@
                 });
             });
             
-            // Event listeners para excluir
             document.querySelectorAll('.delete-collaborator').forEach(button => {
                 button.addEventListener('click', function() {
                     const id = parseInt(this.getAttribute('data-id'));
@@ -4064,7 +4007,6 @@
                 });
             });
             
-            // Event listeners para reativar
             document.querySelectorAll('.reactivate-collaborator').forEach(button => {
                 button.addEventListener('click', function() {
                     const id = parseInt(this.getAttribute('data-id'));
@@ -4166,7 +4108,6 @@
             document.getElementById('collaboratorPericulosidade').checked = collaborator.periculosidade;
             document.getElementById('collaboratorInsalubridade').checked = collaborator.insalubridade;
             
-            // NOVO: Carregar status do colaborador
             if (collaborator.active) {
                 document.getElementById('collaboratorStatusActive').checked = true;
             } else {
@@ -4202,7 +4143,6 @@
             const isEditing = currentCalculationDetailId !== null;
             const mesReferencia = document.getElementById('mesReferencia').value;
             
-            // Verificar duplicidade
             if (!isEditing && checkDuplicateCalculation(selectedCollaboratorId, mesReferencia)) {
                 showDuplicateNotification(`Já existe um cálculo salvo para ${collaborator.name} no mês ${mesReferencia}.`);
                 
@@ -4700,7 +4640,6 @@
                 };
             }
             
-            // Verificar duplicidade após edição
             if (checkDuplicateCalculation(originalCalculation.collaboratorId, updatedData.mesReferencia, currentCalculationDetailId)) {
                 if (!confirm('Já existe outro cálculo para este colaborador neste mês. Deseja salvar mesmo assim?')) {
                     return;
@@ -5130,7 +5069,6 @@
                     consolidated[key].adicionalNoturnoValor += parseFloat(calc.data.resultados.valorAdicionalNoturno.replace('R$', '').replace('.', '').replace(',', '.').trim()) || 0;
                     consolidated[key].reflexosValor += parseFloat(calc.data.resultados.valorReflexoDSRTotalSum.replace('R$', '').replace('.', '').replace(',', '.').trim()) || 0;
                     
-                    // Acumular reflexos individuais
                     consolidated[key].reflexoSobreavisoValor += parseFloat(calc.data.resultados.valorReflexoSobreavisoEspera.replace('R$', '').replace('.', '').replace(',', '.').trim()) || 0;
                     consolidated[key].reflexoSobreavisoTrabalhadoValor += parseFloat(calc.data.resultados.valorReflexoSobreavisoTrabalhado.replace('R$', '').replace('.', '').replace(',', '.').trim()) || 0;
                     consolidated[key].reflexoHorasExtrasValor += parseFloat(calc.data.resultados.valorReflexoHorasExtrasNormal.replace('R$', '').replace('.', '').replace(',', '.').trim()) || 0;
@@ -5183,7 +5121,6 @@
             let totalGeral = 0;
             
             reportData.forEach((row) => {
-                // Calcular o total SOMENTE com as colunas que estão visíveis
                 let totalFiltrado = 0;
                 
                 if (visibleColumns.periculosidade) totalFiltrado += row.periculosidadeValor;
@@ -5192,14 +5129,12 @@
                 if (visibleColumns.horas_extras) totalFiltrado += row.horasExtrasValor;
                 if (visibleColumns.adicional_noturno) totalFiltrado += row.adicionalNoturnoValor;
                 
-                // CORREÇÃO CRÍTICA: O valor dos reflexos agora é calculado com base nas colunas selecionadas
                 let reflexosFiltrados = 0;
                 if (visibleColumns.sobreaviso) reflexosFiltrados += row.reflexoSobreavisoValor;
                 if (visibleColumns.sobreaviso_trabalhado) reflexosFiltrados += row.reflexoSobreavisoTrabalhadoValor;
                 if (visibleColumns.horas_extras) reflexosFiltrados += row.reflexoHorasExtrasValor;
                 if (visibleColumns.adicional_noturno) reflexosFiltrados += row.reflexoAdicionalNoturnoValor;
                 
-                // Se a coluna de reflexos estiver visível, adicionamos o valor filtrado
                 if (visibleColumns.reflexos) totalFiltrado += reflexosFiltrados;
                 
                 totalGeral += totalFiltrado;
@@ -5571,9 +5506,8 @@
         // ============================================
         
         document.addEventListener('DOMContentLoaded', () => {
-            console.log("🚀 Aplicação inicializada com layout otimizado");
+            console.log("🚀 Aplicação inicializada com modais corrigidos");
             
-            // Carregar configurações
             loadSettings();
             
             const monthInput = document.getElementById('mesReferencia');
@@ -5652,7 +5586,6 @@
             
             document.getElementById('toggleBases').addEventListener('click', toggleBasesVisibility);
             
-            // Eventos do menu lateral
             document.getElementById('menuCalculator').addEventListener('click', showCalculator);
             document.getElementById('menuCollaborators').addEventListener('click', showCollaborators);
             document.getElementById('menuHistory').addEventListener('click', showHistory);
@@ -5660,11 +5593,9 @@
             document.getElementById('menuSettings').addEventListener('click', openSettingsModal);
             document.getElementById('menuAdmin').addEventListener('click', openAdminModal);
             
-            // Eventos das abas de colaboradores/departamentos
             document.getElementById('tabCollaborators').addEventListener('click', showCollaboratorsTab);
             document.getElementById('tabDepartments').addEventListener('click', showDepartmentsTab);
             
-            // Eventos do modal de colaborador
             document.getElementById('closeModal').addEventListener('click', closeModal);
             document.getElementById('cancelCollaborator').addEventListener('click', closeModal);
             document.getElementById('collaboratorForm').addEventListener('submit', saveCollaborator);
@@ -5673,37 +5604,31 @@
                 openModal();
             });
             
-            // Evento para adicionar departamento pelo modal de colaborador
             document.getElementById('addDepartmentFromCollaborator').addEventListener('click', (e) => {
                 e.preventDefault();
                 closeModal();
                 openDepartmentModal();
             });
             
-            // Eventos do modal de departamento
             document.getElementById('closeDepartmentModal').addEventListener('click', closeDepartmentModal);
             document.getElementById('cancelDepartment').addEventListener('click', closeDepartmentModal);
             document.getElementById('departmentForm').addEventListener('submit', saveNewDepartment);
             document.getElementById('addNewDepartment').addEventListener('click', openDepartmentModal);
             
-            // Eventos do modal de detalhes do cálculo
             document.getElementById('closeCalculationDetailModal').addEventListener('click', closeCalculationDetailModal);
             document.getElementById('closeCalculationDetail').addEventListener('click', closeCalculationDetailModal);
             document.getElementById('editCalculationBtn').addEventListener('click', enableDetailEditMode);
             document.getElementById('saveEditBtn').addEventListener('click', saveDetailEdit);
             document.getElementById('cancelEditBtn').addEventListener('click', cancelDetailEdit);
             
-            // Eventos do modal de exclusão de colaborador
             document.getElementById('closeDeleteModal').addEventListener('click', closeDeleteCollaboratorModal);
             document.getElementById('cancelDeleteCollaborator').addEventListener('click', closeDeleteCollaboratorModal);
             document.getElementById('confirmDeleteCollaborator').addEventListener('click', confirmDeleteCollaborator);
             
-            // Eventos do modal de exclusão de usuário
             document.getElementById('closeDeleteUserModal').addEventListener('click', closeDeleteUserModal);
             document.getElementById('cancelDeleteUser').addEventListener('click', closeDeleteUserModal);
             document.getElementById('confirmDeleteUser').addEventListener('click', confirmDeleteUser);
             
-            // Eventos de relatórios
             document.getElementById('refreshReports').addEventListener('click', () => {
                 updateCollaboratorFilterSelect();
                 updateDepartmentSelect();
@@ -5713,25 +5638,20 @@
             document.getElementById('exportReportCSV').addEventListener('click', exportReportCSV);
             document.getElementById('exportReportPDF').addEventListener('click', exportReportPDF);
             
-            // Eventos de configurações
             document.getElementById('closeSettingsModal').addEventListener('click', closeSettingsModal);
             document.getElementById('saveSettings').addEventListener('click', saveSettings);
             
-            // Eventos de administração
             document.getElementById('closeAdminModal').addEventListener('click', closeAdminModal);
             
-            // Botão de força de sincronização
             document.getElementById('forceSyncBtn')?.addEventListener('click', () => {
                 localStorage.removeItem(CACHE_KEY);
                 loadAllUsers();
             });
             
-            // Formatação de moeda no campo de salário do colaborador
             document.getElementById('collaboratorBaseSalary').addEventListener('input', function() {
                 formatCurrencyInput(this);
             });
             
-            // Eventos de impressão/PDF
             document.getElementById('printButton').addEventListener('click', () => {
                 const { jsPDF } = window.jspdf;
                 const doc = new jsPDF('p', 'mm', 'a4');
@@ -5847,14 +5767,12 @@
                 alert('PDF gerado com sucesso!');
             });
             
-            // EVENTOS DE IMPORTAÇÃO DE PLANILHA
             document.getElementById('importCollaboratorsBtn').addEventListener('click', openImportModal);
             document.getElementById('closeImportModal').addEventListener('click', closeImportModal);
             document.getElementById('cancelImport').addEventListener('click', closeImportModal);
             document.getElementById('confirmImport').addEventListener('click', confirmImport);
             document.getElementById('downloadTemplate').addEventListener('click', downloadTemplate);
             
-            // Área de upload
             const fileUploadArea = document.getElementById('fileUploadArea');
             const fileInput = document.getElementById('spreadsheetFile');
             const selectFileButton = document.getElementById('selectFileButton');
@@ -5890,7 +5808,6 @@
             
             fileInput.addEventListener('change', handleFileSelect);
             
-            // Fechar modais clicando no fundo
             document.getElementById('importSpreadsheetModal').addEventListener('click', function(event) {
                 if (event.target === this) {
                     closeImportModal();
