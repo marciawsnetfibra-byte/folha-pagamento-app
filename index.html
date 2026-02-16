@@ -214,7 +214,7 @@
             color: white;
         }
         
-        /* CONTEÚDO PRINCIPAL - OCUPA TODO ESPAÇO */
+        /* CONTEÚDO PRINCIPAL */
         .main-content {
             flex: 1;
             margin-left: 260px;
@@ -223,7 +223,7 @@
             width: calc(100% - 260px);
         }
         
-        /* CONTAINERS PRINCIPAIS - LARGURA TOTAL */
+        /* CONTAINERS PRINCIPAIS */
         .container {
             background: white;
             border-radius: 12px;
@@ -235,28 +235,53 @@
             width: 100%;
         }
         
-        /* GRIDS QUE OCUPAM 100% */
-        .grid-cols-1.lg\:grid-cols-2 {
+        /* MODAL DE LOGIN - COM FUNDO ESCURO SOBREPOSTO */
+        .login-modal {
+            position: fixed;
+            top: 0;
+            left: 0;
             width: 100%;
-            gap: 20px;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.9);
+            backdrop-filter: blur(8px);
+            display: none;
+            align-items: center;
+            justify-content: center;
+            z-index: 10000;
         }
         
-        /* AJUSTE PARA OS CARDS FICAREM EQUILIBRADOS */
-        #input-container, #input-container + div {
-            width: 100%;
+        .login-modal.active {
+            display: flex;
         }
         
-        /* BOTÕES ALINHADOS À DIREITA */
-        .flex.justify-end {
-            width: 100%;
+        .login-box {
+            background: white;
+            padding: 2rem;
+            border-radius: 12px;
+            width: 90%;
+            max-width: 400px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.3);
+            position: relative;
+            z-index: 10001;
         }
         
-        /* TABELAS COM LARGURA TOTAL */
-        .overflow-x-auto {
+        /* OVERLAY PARA OUTROS MODAIS */
+        .modal-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
             width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.7);
+            backdrop-filter: blur(5px);
+            z-index: 1999;
+            display: none;
         }
         
-        /* MODAIS - CENTRALIZADOS */
+        .modal-overlay.active {
+            display: block;
+        }
+        
         .modal {
             display: none;
             position: fixed;
@@ -264,10 +289,9 @@
             left: 0;
             width: 100%;
             height: 100%;
-            background-color: rgba(0, 0, 0, 0.5);
-            z-index: 2000;
             align-items: center;
             justify-content: center;
+            z-index: 2000;
         }
         
         .modal.active {
@@ -282,6 +306,8 @@
             max-height: 90vh;
             overflow-y: auto;
             box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
+            position: relative;
+            z-index: 2001;
         }
         
         .modal-header {
@@ -580,28 +606,6 @@
         .firebase-offline {
             background-color: #6B7280;
             color: white;
-        }
-        
-        .login-modal {
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background-color: rgba(0, 0, 0, 0.8);
-            display: none;
-            align-items: center;
-            justify-content: center;
-            z-index: 10000;
-        }
-        
-        .login-box {
-            background: white;
-            padding: 2rem;
-            border-radius: 12px;
-            width: 90%;
-            max-width: 400px;
-            box-shadow: 0 10px 30px rgba(0,0,0,0.3);
         }
         
         .login-tabs {
@@ -1225,7 +1229,7 @@
                 </div>
             </div>
 
-            <!-- Modal de Login -->
+            <!-- Modal de Login - AGORA COM FUNDO ESCURO SOBREPOSTO -->
             <div id="loginModal" class="login-modal">
                 <div class="login-box">
                     <h2 class="text-2xl font-bold titulo-cor mb-2">Acesso ao Sistema</h2>
@@ -2159,18 +2163,8 @@
         const DEPARTMENTS_STORAGE_KEY = 'folha_departamentos';
         const SETTINGS_STORAGE_KEY = 'folha_configuracoes';
         
-        const DEFAULT_DEPARTMENTS = [
-            { id: 1, name: "Produção", active: true },
-            { id: 2, name: "Manutenção", active: true },
-            { id: 3, name: "Administrativo", active: true },
-            { id: 4, name: "RH", active: true },
-            { id: 5, name: "Financeiro", active: true },
-            { id: 6, name: "TI", active: true },
-            { id: 7, name: "Comercial", active: true },
-            { id: 8, name: "Logística", active: true },
-            { id: 9, name: "Qualidade", active: true },
-            { id: 10, name: "Segurança", active: true }
-        ];
+        // SEM DADOS DE TESTE - Array vazio
+        const DEFAULT_DEPARTMENTS = [];
 
         // ============================================
         // FORMATAÇÃO DE MOEDA
@@ -2700,16 +2694,18 @@
                     statusElement.innerHTML = '<i class="fas fa-exclamation-triangle"></i> <span>Modo offline (Firestore indisponível)</span>';
                 }
                 
-                if (loginModal && loginModal.style.display === 'flex') {
-                    loginModal.style.display = 'none';
+                // Fechar modal de login se estiver aberto
+                if (loginModal && loginModal.classList.contains('active')) {
+                    loginModal.classList.remove('active');
                 }
                 
             } else {
                 statusElement.className = 'firebase-status firebase-disconnected';
                 statusElement.innerHTML = '<i class="fas fa-laptop"></i> <span>Modo offline (apenas local)</span>';
                 
-                if (auth && loginModal && !localStorage.getItem('skipLogin') && loginModal.style.display !== 'flex') {
-                    loginModal.style.display = 'flex';
+                // Mostrar modal de login se necessário
+                if (auth && !localStorage.getItem('skipLogin') && !loginModal.classList.contains('active')) {
+                    loginModal.classList.add('active');
                 }
             }
         }
@@ -2902,7 +2898,7 @@
 
         document.getElementById('btnContinueOffline').addEventListener('click', () => {
             localStorage.setItem('skipLogin', 'true');
-            document.getElementById('loginModal').style.display = 'none';
+            document.getElementById('loginModal').classList.remove('active');
         });
 
         document.getElementById('btnLogout').addEventListener('click', () => {
@@ -2994,11 +2990,8 @@
         
         function getDepartments() {
             const savedData = localStorage.getItem(DEPARTMENTS_STORAGE_KEY);
-            if (!savedData) {
-                saveDepartments(DEFAULT_DEPARTMENTS);
-                return DEFAULT_DEPARTMENTS;
-            }
-            return JSON.parse(savedData);
+            // Retorna array vazio se não houver dados salvos
+            return savedData ? JSON.parse(savedData) : [];
         }
         
         function getCollaborators() {
