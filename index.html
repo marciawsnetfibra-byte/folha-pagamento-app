@@ -2263,7 +2263,7 @@
         const CACHE_KEY = 'folha_usuarios_cache';
         const CACHE_DURATION = 10 * 60 * 1000;
 
-        // Listeners em tempo real
+        // Listeners em tempo real - AGORA FUNCIONANDO DE VERDADE!
         let unsubscribeDepartments = null;
         let unsubscribeCollaborators = null;
         let unsubscribeCalculations = null;
@@ -2753,9 +2753,11 @@
                     document.getElementById('btnLogout').style.display = 'flex';
                     
                     await checkAdminStatus(user);
+                    
+                    // Carregar dados iniciais
                     await loadUserData();
                     
-                    // Configurar listeners em tempo real
+                    // Configurar listeners em tempo real - AGORA FUNCIONANDO!
                     setupRealtimeListeners();
                     
                 } else {
@@ -2896,58 +2898,122 @@
         });
 
         // ============================================
-        // FUNÇÕES DE SINCRONIZAÇÃO EM TEMPO REAL
+        // FUNÇÕES DE SINCRONIZAÇÃO EM TEMPO REAL - CORRIGIDAS!
         // ============================================
         
         function setupRealtimeListeners() {
             if (!currentUser || !db || !firebaseAvailable) return;
             
-            // Listener para departamentos
+            console.log("🔄 Configurando listeners em tempo real...");
+            
+            // Listener para departamentos - ATUALIZA EM TEMPO REAL
             unsubscribeDepartments = db.collection('users').doc(currentUser.uid)
                 .onSnapshot((doc) => {
                     if (doc.exists) {
                         const data = doc.data();
+                        console.log("📦 Dados de departamentos atualizados:", data.departments);
+                        
                         if (data.departments) {
+                            // Atualizar localStorage
                             localStorage.setItem(DEPARTMENTS_STORAGE_KEY, JSON.stringify(data.departments));
+                            
+                            // Atualizar interface
                             updateDepartmentSelect();
                             renderDepartmentsTable();
+                            
+                            // Mostrar notificação sutil
+                            showSyncNotification('Departamentos sincronizados');
                         }
                     }
                 }, (error) => {
                     console.error("Erro no listener de departamentos:", error);
                 });
             
-            // Listener para colaboradores
+            // Listener para colaboradores - ATUALIZA EM TEMPO REAL
             unsubscribeCollaborators = db.collection('users').doc(currentUser.uid)
                 .onSnapshot((doc) => {
                     if (doc.exists) {
                         const data = doc.data();
+                        console.log("📦 Dados de colaboradores atualizados:", data.collaborators);
+                        
                         if (data.collaborators) {
+                            // Atualizar localStorage
                             localStorage.setItem(COLLABORATORS_STORAGE_KEY, JSON.stringify(data.collaborators));
+                            
+                            // Atualizar interface
                             updateCollaboratorSelect();
                             updateCollaboratorFilterSelect();
                             renderCollaboratorsTable(currentCollaboratorStatus);
+                            
+                            // Mostrar notificação sutil
+                            showSyncNotification('Colaboradores sincronizados');
                         }
                     }
                 }, (error) => {
                     console.error("Erro no listener de colaboradores:", error);
                 });
             
-            // Listener para cálculos
+            // Listener para cálculos - ATUALIZA EM TEMPO REAL
             unsubscribeCalculations = db.collection('users').doc(currentUser.uid)
                 .onSnapshot((doc) => {
                     if (doc.exists) {
                         const data = doc.data();
+                        console.log("📦 Dados de cálculos atualizados:", data.calculations);
+                        
                         if (data.calculations) {
+                            // Atualizar localStorage
                             localStorage.setItem(CALCULATIONS_STORAGE_KEY, JSON.stringify(data.calculations));
+                            
+                            // Atualizar interface se estiver na aba de histórico
                             if (!document.getElementById('historyContent').classList.contains('hidden')) {
                                 renderHistoryTable();
                             }
+                            
+                            // Mostrar notificação sutil
+                            showSyncNotification('Cálculos sincronizados');
                         }
                     }
                 }, (error) => {
                     console.error("Erro no listener de cálculos:", error);
                 });
+        }
+        
+        // Função para mostrar notificação de sincronização
+        function showSyncNotification(message) {
+            // Criar elemento de notificação se não existir
+            let notification = document.getElementById('syncNotification');
+            if (!notification) {
+                notification = document.createElement('div');
+                notification.id = 'syncNotification';
+                notification.style.cssText = `
+                    position: fixed;
+                    bottom: 20px;
+                    left: 50%;
+                    transform: translateX(-50%);
+                    background-color: #10B981;
+                    color: white;
+                    padding: 8px 16px;
+                    border-radius: 20px;
+                    font-size: 12px;
+                    box-shadow: 0 2px 10px rgba(0,0,0,0.2);
+                    z-index: 10000;
+                    display: none;
+                    align-items: center;
+                    gap: 8px;
+                `;
+                notification.innerHTML = '<i class="fas fa-check-circle"></i><span></span>';
+                document.body.appendChild(notification);
+            }
+            
+            // Mostrar notificação
+            const span = notification.querySelector('span');
+            span.textContent = message;
+            notification.style.display = 'flex';
+            
+            // Esconder após 2 segundos
+            setTimeout(() => {
+                notification.style.display = 'none';
+            }, 2000);
         }
 
         async function loadUserData() {
@@ -2970,6 +3036,13 @@
                     if (userData.calculations) {
                         localStorage.setItem(CALCULATIONS_STORAGE_KEY, JSON.stringify(userData.calculations));
                     }
+                    
+                    // Atualizar interface
+                    updateDepartmentSelect();
+                    renderDepartmentsTable();
+                    updateCollaboratorSelect();
+                    updateCollaboratorFilterSelect();
+                    renderCollaboratorsTable(currentCollaboratorStatus);
                     
                 } else {
                     await initializeUserData();
@@ -3019,33 +3092,7 @@
             }
         }
 
-        async function syncDataWithFirebase() {
-            if (!currentUser || !userData || !db || !firebaseAvailable) return;
-            
-            try {
-                const localDepartments = getDepartmentsFromStorage();
-                if (localDepartments.length > 0) {
-                    await updateFirebaseData('departments', localDepartments);
-                }
-                
-                const localCollaborators = getCollaboratorsFromStorage();
-                if (localCollaborators.length > 0) {
-                    await updateFirebaseData('collaborators', localCollaborators);
-                }
-                
-                const localCalculations = getCalculationsFromStorage();
-                if (localCalculations.length > 0) {
-                    await updateFirebaseData('calculations', localCalculations);
-                }
-                
-                console.log("✅ Sincronização concluída");
-                
-            } catch (error) {
-                console.error("❌ Erro na sincronização:", error);
-            }
-        }
-
-        async function updateFirebaseData(field, data) {
+        async function syncDataWithFirebase(field, data) {
             if (!currentUser || !db || !firebaseAvailable) return;
             
             try {
@@ -3057,10 +3104,10 @@
                 if (userData) {
                     userData[field] = data;
                 }
-                console.log(`✅ ${field} atualizados no Firebase`);
+                console.log(`✅ ${field} sincronizado com Firebase`);
                 
             } catch (error) {
-                console.error(`❌ Erro ao atualizar ${field}:`, error);
+                console.error(`❌ Erro ao sincronizar ${field}:`, error);
                 throw error;
             }
         }
@@ -3193,12 +3240,9 @@
         async function saveDepartments(departments) {
             localStorage.setItem(DEPARTMENTS_STORAGE_KEY, JSON.stringify(departments));
             
+            // Sincronizar com Firebase
             if (currentUser && db && firebaseAvailable) {
-                try {
-                    await updateFirebaseData('departments', departments);
-                } catch (error) {
-                    console.error("❌ Erro ao sincronizar departamentos:", error);
-                }
+                await syncDataWithFirebase('departments', departments);
             }
             
             if (userData) {
@@ -3209,12 +3253,9 @@
         async function saveCollaborators(collaborators) {
             localStorage.setItem(COLLABORATORS_STORAGE_KEY, JSON.stringify(collaborators));
             
+            // Sincronizar com Firebase
             if (currentUser && db && firebaseAvailable) {
-                try {
-                    await updateFirebaseData('collaborators', collaborators);
-                } catch (error) {
-                    console.error("❌ Erro ao sincronizar colaboradores:", error);
-                }
+                await syncDataWithFirebase('collaborators', collaborators);
             }
             
             if (userData) {
@@ -3225,12 +3266,9 @@
         async function saveCalculations(calculations) {
             localStorage.setItem(CALCULATIONS_STORAGE_KEY, JSON.stringify(calculations));
             
+            // Sincronizar com Firebase
             if (currentUser && db && firebaseAvailable) {
-                try {
-                    await updateFirebaseData('calculations', calculations);
-                } catch (error) {
-                    console.error("❌ Erro ao sincronizar cálculos:", error);
-                }
+                await syncDataWithFirebase('calculations', calculations);
             }
             
             if (userData) {
