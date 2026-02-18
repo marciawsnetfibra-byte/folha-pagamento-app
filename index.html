@@ -235,7 +235,7 @@
             width: 100%;
         }
         
-        /* MODAL DE LOGIN - FUNDO ESCURO SOBREPOSTO */
+        /* MODAL DE LOGIN */
         .login-modal {
             position: fixed;
             top: 0;
@@ -265,7 +265,37 @@
             z-index: 10001;
         }
         
-        /* MODAIS DE CONFIGURAÇÃO E ADMINISTRAÇÃO - CORRIGIDOS */
+        /* MODAL DE RECUPERAÇÃO DE SENHA */
+        .forgot-password-modal {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.9);
+            backdrop-filter: blur(8px);
+            display: none;
+            align-items: center;
+            justify-content: center;
+            z-index: 11000;
+        }
+        
+        .forgot-password-modal.active {
+            display: flex;
+        }
+        
+        .forgot-password-box {
+            background: white;
+            padding: 2rem;
+            border-radius: 12px;
+            width: 90%;
+            max-width: 400px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.3);
+            position: relative;
+            z-index: 11001;
+        }
+        
+        /* OUTROS MODAIS */
         .modal {
             display: none;
             position: fixed;
@@ -652,6 +682,48 @@
         
         .login-error.show {
             display: block;
+        }
+        
+        .forgot-password-link {
+            text-align: right;
+            margin-top: 8px;
+        }
+        
+        .forgot-password-link button {
+            background: none;
+            border: none;
+            color: #3B82F6;
+            font-size: 0.85rem;
+            cursor: pointer;
+            text-decoration: underline;
+        }
+        
+        .forgot-password-link button:hover {
+            color: #1E40AF;
+        }
+        
+        .success-message {
+            background-color: #d1fae5;
+            border: 1px solid #a7f3d0;
+            color: #065f46;
+            padding: 12px;
+            border-radius: 6px;
+            margin-bottom: 16px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        
+        .warning-message {
+            background-color: #fffbeb;
+            border: 1px solid #fcd34d;
+            color: #92400e;
+            padding: 12px;
+            border-radius: 6px;
+            margin-bottom: 16px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
         }
         
         .column-toggle-btn {
@@ -1244,6 +1316,11 @@
                         <span id="errorText">Mensagem de erro aparecerá aqui</span>
                     </div>
                     
+                    <div id="forgotPasswordSuccess" class="success-message" style="display: none;">
+                        <i class="fas fa-check-circle"></i>
+                        <span id="forgotPasswordSuccessText">Email de recuperação enviado!</span>
+                    </div>
+                    
                     <div id="loginForm">
                         <div class="space-y-4">
                             <div>
@@ -1255,6 +1332,9 @@
                                 <label class="block text-sm font-medium text-gray-700 mb-1">Senha</label>
                                 <input type="password" id="loginPassword" class="w-full p-3 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500" 
                                        placeholder="••••••••" autocomplete="current-password">
+                            </div>
+                            <div class="forgot-password-link">
+                                <button type="button" id="forgotPasswordBtn">Esqueci minha senha</button>
                             </div>
                             <button id="btnLogin" class="w-full bg-blue-600 text-white p-3 rounded-lg hover:bg-blue-700 font-medium transition duration-150">
                                 <i class="fas fa-sign-in-alt mr-2"></i>Entrar
@@ -1293,6 +1373,40 @@
                     
                     <div class="mt-4 text-xs text-gray-500">
                         <p><i class="fas fa-info-circle mr-1"></i> Com login, seus dados serão salvos na nuvem e poderão ser acessados de qualquer dispositivo.</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Modal de Recuperação de Senha -->
+            <div id="forgotPasswordModal" class="forgot-password-modal">
+                <div class="forgot-password-box">
+                    <h2 class="text-2xl font-bold titulo-cor mb-2">Recuperar Senha</h2>
+                    <p class="mb-6 text-gray-600 text-sm">Digite seu email para receber um link de recuperação</p>
+                    
+                    <div id="forgotPasswordError" class="login-error">
+                        <i class="fas fa-exclamation-circle mr-1"></i>
+                        <span id="forgotErrorText">Mensagem de erro</span>
+                    </div>
+                    
+                    <div id="forgotPasswordSuccessModal" class="success-message" style="display: none;">
+                        <i class="fas fa-check-circle"></i>
+                        <span>Email de recuperação enviado! Verifique sua caixa de entrada.</span>
+                    </div>
+                    
+                    <div class="space-y-4">
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-1">Email</label>
+                            <input type="email" id="forgotEmail" class="w-full p-3 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500" 
+                                   placeholder="seu@email.com">
+                        </div>
+                        <button id="btnSendResetLink" class="w-full bg-blue-600 text-white p-3 rounded-lg hover:bg-blue-700 font-medium transition duration-150">
+                            <i class="fas fa-paper-plane mr-2"></i>Enviar Link
+                        </button>
+                        <div class="text-center mt-4">
+                            <button id="btnBackToLogin" class="text-blue-600 hover:text-blue-800 text-sm">
+                                <i class="fas fa-arrow-left mr-1"></i>Voltar para o login
+                            </button>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -2149,6 +2263,11 @@
         const CACHE_KEY = 'folha_usuarios_cache';
         const CACHE_DURATION = 10 * 60 * 1000;
 
+        // Listeners em tempo real
+        let unsubscribeDepartments = null;
+        let unsubscribeCollaborators = null;
+        let unsubscribeCalculations = null;
+
         // ============================================
         // CHAVES DE ARMAZENAMENTO
         // ============================================
@@ -2636,6 +2755,9 @@
                     await checkAdminStatus(user);
                     await loadUserData();
                     
+                    // Configurar listeners em tempo real
+                    setupRealtimeListeners();
+                    
                 } else {
                     console.log("👤 Usuário desconectado");
                     currentUser = null;
@@ -2647,6 +2769,11 @@
                     document.getElementById('offlineBadgeSide').style.display = 'none';
                     document.getElementById('userEmailSide').textContent = '';
                     document.getElementById('btnLogout').style.display = 'none';
+                    
+                    // Remover listeners
+                    if (unsubscribeDepartments) unsubscribeDepartments();
+                    if (unsubscribeCollaborators) unsubscribeCollaborators();
+                    if (unsubscribeCalculations) unsubscribeCalculations();
                 }
             });
         } else {
@@ -2681,6 +2808,148 @@
             }
         }
 
+        // ============================================
+        // FUNÇÕES DE RECUPERAÇÃO DE SENHA
+        // ============================================
+        
+        document.getElementById('forgotPasswordBtn').addEventListener('click', () => {
+            document.getElementById('loginModal').classList.remove('active');
+            document.getElementById('forgotPasswordModal').classList.add('active');
+            document.getElementById('forgotPasswordError').classList.remove('show');
+            document.getElementById('forgotPasswordSuccessModal').style.display = 'none';
+            document.getElementById('forgotEmail').value = '';
+        });
+
+        document.getElementById('btnBackToLogin').addEventListener('click', () => {
+            document.getElementById('forgotPasswordModal').classList.remove('active');
+            document.getElementById('loginModal').classList.add('active');
+        });
+
+        document.getElementById('btnSendResetLink').addEventListener('click', async () => {
+            const email = document.getElementById('forgotEmail').value;
+            const errorElement = document.getElementById('forgotPasswordError');
+            const errorText = document.getElementById('forgotErrorText');
+            const successElement = document.getElementById('forgotPasswordSuccessModal');
+            
+            if (!email) {
+                errorText.textContent = 'Por favor, digite seu email.';
+                errorElement.classList.add('show');
+                successElement.style.display = 'none';
+                return;
+            }
+            
+            try {
+                await auth.sendPasswordResetEmail(email);
+                errorElement.classList.remove('show');
+                successElement.style.display = 'flex';
+                
+                setTimeout(() => {
+                    document.getElementById('forgotPasswordModal').classList.remove('active');
+                    document.getElementById('loginModal').classList.add('active');
+                }, 3000);
+                
+            } catch (error) {
+                console.error('❌ Erro ao enviar email de recuperação:', error);
+                errorText.textContent = getFirebaseErrorMessage(error.code);
+                errorElement.classList.add('show');
+                successElement.style.display = 'none';
+            }
+        });
+
+        // ============================================
+        // CONFIGURAÇÃO DO ENTER PARA LOGIN
+        // ============================================
+        
+        document.getElementById('loginPassword').addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') {
+                e.preventDefault();
+                document.getElementById('btnLogin').click();
+            }
+        });
+
+        document.getElementById('loginEmail').addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') {
+                e.preventDefault();
+                document.getElementById('loginPassword').focus();
+            }
+        });
+
+        document.getElementById('signupPassword').addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') {
+                e.preventDefault();
+                document.getElementById('signupConfirmPassword').focus();
+            }
+        });
+
+        document.getElementById('signupConfirmPassword').addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') {
+                e.preventDefault();
+                document.getElementById('btnSignup').click();
+            }
+        });
+
+        document.getElementById('forgotEmail').addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') {
+                e.preventDefault();
+                document.getElementById('btnSendResetLink').click();
+            }
+        });
+
+        // ============================================
+        // FUNÇÕES DE SINCRONIZAÇÃO EM TEMPO REAL
+        // ============================================
+        
+        function setupRealtimeListeners() {
+            if (!currentUser || !db || !firebaseAvailable) return;
+            
+            // Listener para departamentos
+            unsubscribeDepartments = db.collection('users').doc(currentUser.uid)
+                .onSnapshot((doc) => {
+                    if (doc.exists) {
+                        const data = doc.data();
+                        if (data.departments) {
+                            localStorage.setItem(DEPARTMENTS_STORAGE_KEY, JSON.stringify(data.departments));
+                            updateDepartmentSelect();
+                            renderDepartmentsTable();
+                        }
+                    }
+                }, (error) => {
+                    console.error("Erro no listener de departamentos:", error);
+                });
+            
+            // Listener para colaboradores
+            unsubscribeCollaborators = db.collection('users').doc(currentUser.uid)
+                .onSnapshot((doc) => {
+                    if (doc.exists) {
+                        const data = doc.data();
+                        if (data.collaborators) {
+                            localStorage.setItem(COLLABORATORS_STORAGE_KEY, JSON.stringify(data.collaborators));
+                            updateCollaboratorSelect();
+                            updateCollaboratorFilterSelect();
+                            renderCollaboratorsTable(currentCollaboratorStatus);
+                        }
+                    }
+                }, (error) => {
+                    console.error("Erro no listener de colaboradores:", error);
+                });
+            
+            // Listener para cálculos
+            unsubscribeCalculations = db.collection('users').doc(currentUser.uid)
+                .onSnapshot((doc) => {
+                    if (doc.exists) {
+                        const data = doc.data();
+                        if (data.calculations) {
+                            localStorage.setItem(CALCULATIONS_STORAGE_KEY, JSON.stringify(data.calculations));
+                            if (!document.getElementById('historyContent').classList.contains('hidden')) {
+                                renderHistoryTable();
+                            }
+                        }
+                    }
+                }, (error) => {
+                    console.error("Erro no listener de cálculos:", error);
+                });
+        }
+
         async function loadUserData() {
             if (!currentUser || !db || !firebaseAvailable) return;
             
@@ -2691,7 +2960,16 @@
                     userData = userDoc.data();
                     console.log("✅ Dados do usuário carregados do Firestore");
                     
-                    await syncDataWithFirebase();
+                    // Atualizar localStorage com dados do Firestore
+                    if (userData.departments) {
+                        localStorage.setItem(DEPARTMENTS_STORAGE_KEY, JSON.stringify(userData.departments));
+                    }
+                    if (userData.collaborators) {
+                        localStorage.setItem(COLLABORATORS_STORAGE_KEY, JSON.stringify(userData.collaborators));
+                    }
+                    if (userData.calculations) {
+                        localStorage.setItem(CALCULATIONS_STORAGE_KEY, JSON.stringify(userData.calculations));
+                    }
                     
                 } else {
                     await initializeUserData();
@@ -2797,6 +3075,7 @@
             document.getElementById('loginForm').style.display = 'block';
             document.getElementById('signupForm').style.display = 'none';
             document.getElementById('loginError').classList.remove('show');
+            document.getElementById('forgotPasswordSuccess').style.display = 'none';
         });
         
         document.getElementById('tabSignup').addEventListener('click', () => {
@@ -2805,6 +3084,7 @@
             document.getElementById('loginForm').style.display = 'none';
             document.getElementById('signupForm').style.display = 'block';
             document.getElementById('loginError').classList.remove('show');
+            document.getElementById('forgotPasswordSuccess').style.display = 'none';
         });
 
         document.getElementById('btnLogin').addEventListener('click', async () => {
@@ -5506,7 +5786,7 @@
         // ============================================
         
         document.addEventListener('DOMContentLoaded', () => {
-            console.log("🚀 Aplicação inicializada com modais corrigidos");
+            console.log("🚀 Aplicação inicializada com sincronização em tempo real");
             
             loadSettings();
             
