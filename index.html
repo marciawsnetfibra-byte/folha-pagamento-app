@@ -1304,7 +1304,7 @@
             <div id="loginModal" class="login-modal">
                 <div class="login-box">
                     <h2 class="text-2xl font-bold titulo-cor mb-2">Acesso ao Sistema</h2>
-                    <p class="mb-6 text-gray-600 text-sm">Faça login para sincronizar seus dados na nuvem</p>
+                    <p class="mb-6 text-gray-600 text-sm">Faça login para acessar seus dados na nuvem</p>
                     
                     <div class="login-tabs">
                         <button class="login-tab active" id="tabLogin">Entrar</button>
@@ -1365,11 +1365,7 @@
                         </div>
                     </div>
                     
-                    <div class="mt-6 pt-6 border-t text-center">
-                        <button id="btnContinueOffline" class="text-blue-600 hover:text-blue-800 text-sm">
-                            <i class="fas fa-laptop mr-1"></i>Continuar sem login (apenas local)
-                        </button>
-                    </div>
+                    <!-- Botão "Continuar sem login" removido -->
                     
                     <div class="mt-4 text-xs text-gray-500">
                         <p><i class="fas fa-info-circle mr-1"></i> Com login, seus dados serão salvos na nuvem e poderão ser acessados de qualquer dispositivo.</p>
@@ -2263,7 +2259,7 @@
         const CACHE_KEY = 'folha_usuarios_cache';
         const CACHE_DURATION = 10 * 60 * 1000;
 
-        // Listeners em tempo real - AGORA FUNCIONANDO DE VERDADE!
+        // Listeners em tempo real
         let unsubscribeDepartments = null;
         let unsubscribeCollaborators = null;
         let unsubscribeCalculations = null;
@@ -2757,7 +2753,7 @@
                     // Carregar dados iniciais
                     await loadUserData();
                     
-                    // Configurar listeners em tempo real - AGORA FUNCIONANDO!
+                    // Configurar listeners em tempo real
                     setupRealtimeListeners();
                     
                 } else {
@@ -2776,6 +2772,9 @@
                     if (unsubscribeDepartments) unsubscribeDepartments();
                     if (unsubscribeCollaborators) unsubscribeCollaborators();
                     if (unsubscribeCalculations) unsubscribeCalculations();
+                    
+                    // Mostrar o modal de login quando não houver usuário
+                    document.getElementById('loginModal').classList.add('active');
                 }
             });
         } else {
@@ -2785,7 +2784,6 @@
 
         function updateAuthUI(user) {
             const statusElement = document.getElementById('firebaseStatus');
-            const loginModal = document.getElementById('loginModal');
             
             if (user && auth) {
                 if (firebaseAvailable) {
@@ -2796,17 +2794,12 @@
                     statusElement.innerHTML = '<i class="fas fa-exclamation-triangle"></i> <span>Modo offline (Firestore indisponível)</span>';
                 }
                 
-                if (loginModal && loginModal.classList.contains('active')) {
-                    loginModal.classList.remove('active');
-                }
-                
             } else {
                 statusElement.className = 'firebase-status firebase-disconnected';
                 statusElement.innerHTML = '<i class="fas fa-laptop"></i> <span>Modo offline (apenas local)</span>';
                 
-                if (auth && !localStorage.getItem('skipLogin') && !loginModal.classList.contains('active')) {
-                    loginModal.classList.add('active');
-                }
+                // Sempre mostrar o modal de login quando não há usuário logado
+                document.getElementById('loginModal').classList.add('active');
             }
         }
 
@@ -2898,7 +2891,7 @@
         });
 
         // ============================================
-        // FUNÇÕES DE SINCRONIZAÇÃO EM TEMPO REAL - CORRIGIDAS!
+        // FUNÇÕES DE SINCRONIZAÇÃO EM TEMPO REAL
         // ============================================
         
         function setupRealtimeListeners() {
@@ -3193,14 +3186,10 @@
             }
         });
 
-        document.getElementById('btnContinueOffline').addEventListener('click', () => {
-            localStorage.setItem('skipLogin', 'true');
-            document.getElementById('loginModal').classList.remove('active');
-        });
+        // Botão "Continuar sem login" removido
 
         document.getElementById('btnLogout').addEventListener('click', () => {
             auth.signOut();
-            localStorage.removeItem('skipLogin');
         });
 
         function getFirebaseErrorMessage(errorCode) {
