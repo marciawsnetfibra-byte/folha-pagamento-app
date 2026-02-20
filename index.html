@@ -2341,9 +2341,6 @@
                 'heNormalPorcentagemDisplay',
                 'heSobreavisoPorcentagemDisplay',
                 'adicionalNoturnoPorcentagemDisplay',
-                'heNormalPorcentagemReflexoDisplay',
-                'heSobreavisoPorcentagemReflexoDisplay',
-                'adicionalNoturnoPorcentagemReflexoDisplay',
                 'heNormalPorcentagemBaseDisplay'
             ];
             
@@ -2702,6 +2699,13 @@
             const email = document.getElementById('deleteUserEmail').textContent;
             
             if (!uid) return;
+            
+            // Impedir exclusão de admins forçados
+            if (FORCED_ADMINS.includes(email)) {
+                alert('❌ Este usuário é um administrador forçado e não pode ser excluído.');
+                closeDeleteUserModal();
+                return;
+            }
             
             try {
                 await db.collection('users').doc(uid).delete();
@@ -3905,6 +3909,7 @@
             const filterDepartment = document.getElementById('filterDepartment');
             const reportDepartment = document.getElementById('reportDepartment');
             
+            if (!select) return; // Adicionado para segurança
             select.innerHTML = '<option value="">Selecione...</option>';
             if (filterDepartment) {
                 filterDepartment.innerHTML = '<option value="">Todos os departamentos</option>';
@@ -4167,6 +4172,7 @@
             const collaborators = getCollaborators();
             const select = document.getElementById('collaboratorSelect');
             
+            if (!select) return; // Adicionado para segurança
             const currentSelection = select.value;
             select.innerHTML = '<option value="">-- Selecione um colaborador --</option>';
             
@@ -4536,6 +4542,8 @@
             const calculations = getSavedCalculations();
             const container = document.getElementById('historyTableBody');
             
+            if (!container) return; // Adicionado para segurança
+            
             let filteredCalculations = [...calculations];
             
             if (filters.collaboratorId) {
@@ -4844,9 +4852,7 @@
                 'detailMesReferencia',
                 'detailDiasTrabalhados',
                 'detailDiasAtestado',
-                'detailDiasFeriado',
-                'detailPagoFolha',
-                'detailCompetenciaPagamento'
+                'detailDiasFeriado'
             ];
             
             editFields.forEach(fieldId => {
@@ -4891,9 +4897,7 @@
                 diasTrabalhados: document.getElementById('detailDiasTrabalhados').value,
                 diasAtestado: document.getElementById('detailDiasAtestado').value,
                 diasFeriado: document.getElementById('detailDiasFeriado').value,
-                mesReferencia: document.getElementById('detailMesReferencia').value,
-                pagoFolha: document.getElementById('detailPagoFolha').checked,
-                competenciaPagamento: document.getElementById('detailCompetenciaPagamento').value
+                mesReferencia: document.getElementById('detailMesReferencia').value
             };
             
             if (!updatedData.salarioBase || !updatedData.mesReferencia) {
@@ -4916,8 +4920,6 @@
                 timestamp: new Date().toLocaleString('pt-BR'),
                 timestampISO: new Date().toISOString(),
                 mesReferencia: updatedData.mesReferencia,
-                pagoFolha: updatedData.pagoFolha,
-                competenciaPagamento: updatedData.competenciaPagamento,
                 data: {
                     ...originalCalculation.data,
                     salarioBase: updatedData.salarioBase,
@@ -5513,11 +5515,11 @@
             const filterBadgesDiv = document.getElementById('filterBadges');
             
             if (Object.keys(activeReportFilters).length === 0) {
-                activeFiltersDiv.classList.add('hidden');
+                if (activeFiltersDiv) activeFiltersDiv.classList.add('hidden');
                 return;
             }
             
-            activeFiltersDiv.classList.remove('hidden');
+            if (activeFiltersDiv) activeFiltersDiv.classList.remove('hidden');
             
             let badgesHtml = '';
             
@@ -5569,7 +5571,7 @@
                 `;
             }
             
-            filterBadgesDiv.innerHTML = badgesHtml;
+            if (filterBadgesDiv) filterBadgesDiv.innerHTML = badgesHtml;
             
             document.querySelectorAll('.remove-filter').forEach(button => {
                 button.addEventListener('click', function() {
@@ -6078,7 +6080,10 @@
             document.getElementById('closeImportModal').addEventListener('click', closeImportModal);
             document.getElementById('cancelImport').addEventListener('click', closeImportModal);
             document.getElementById('confirmImport').addEventListener('click', confirmImport);
-            document.getElementById('downloadTemplate').addEventListener('click', downloadTemplate);
+            document.getElementById('downloadTemplate').addEventListener('click', (e) => {
+                e.preventDefault();
+                downloadTemplate();
+            });
             
             const fileUploadArea = document.getElementById('fileUploadArea');
             const fileInput = document.getElementById('spreadsheetFile');
