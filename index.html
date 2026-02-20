@@ -5,10 +5,10 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Calculadora de Adicionais e Reflexos da Folha de Pagamento</title>
     
-    <!-- Firebase SDK -->
+    <!-- Firebase SDK (ordem correta e versões estáveis) -->
     <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore-compat.js"></script>
     
     <!-- SheetJS para importação de planilhas -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
@@ -22,6 +22,7 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.28/jspdf.plugin.autotable.min.js"></script>
     
     <style>
+        /* (Mantive todo o seu CSS original, está perfeito) */
         :root {
             --cor-titulo: #1800AD;
             --cor-menu: #0B0B2B;
@@ -2185,41 +2186,39 @@
         let firebaseAvailable = false;
         
         try {
+            // Inicializar o Firebase apenas se não estiver já inicializado
+            if (typeof firebase !== 'undefined' && !firebase.apps.length) {
+                firebase.initializeApp(firebaseConfig);
+                console.log("✅ Firebase inicializado com sucesso!");
+            } else if (typeof firebase !== 'undefined') {
+                console.log("✅ Firebase já estava inicializado");
+            } else {
+                console.error("❌ Firebase SDK não encontrado!");
+            }
+            
+            // Obter instâncias dos serviços
             if (typeof firebase !== 'undefined') {
-                if (!firebase.apps || firebase.apps.length === 0) {
-                    firebase.initializeApp(firebaseConfig);
-                    console.log("✅ Firebase inicializado com sucesso!");
-                }
-                
                 auth = firebase.auth();
                 
                 try {
                     db = firebase.firestore();
-                    
-                    try {
-                        db.settings({
-                            ignoreUndefinedProperties: true,
-                            merge: true
-                        });
-                        console.log("✅ Firestore configurado");
-                    } catch (settingsError) {
-                        console.warn("⚠️ Erro ao configurar Firestore:", settingsError);
-                    }
-                    
+                    db.settings({ 
+                        ignoreUndefinedProperties: true,
+                        merge: true 
+                    });
                     firebaseAvailable = true;
-                    
-                } catch (firestoreError) {
-                    console.error("❌ Erro ao inicializar Firestore:", firestoreError);
-                    firebaseAvailable = false;
+                    console.log("✅ Firestore configurado");
+                } catch (e) {
+                    console.warn("⚠️ Firestore não disponível:", e);
                     db = null;
+                    firebaseAvailable = false;
                 }
-                
-            } else {
-                console.error("❌ Firebase SDK não carregado!");
             }
         } catch (error) {
             console.error("❌ Erro crítico ao inicializar Firebase:", error);
             firebaseAvailable = false;
+            auth = null;
+            db = null;
         }
 
         // ============================================
