@@ -150,66 +150,6 @@
             border-top: 1px solid rgba(255, 255, 255, 0.1);
         }
         
-        .user-info-side {
-            background: rgba(255, 255, 255, 0.05);
-            border-radius: 10px;
-            padding: 12px;
-            margin-bottom: 12px;
-            display: none;
-        }
-        
-        .user-email {
-            font-size: 0.8rem;
-            word-break: break-all;
-            color: rgba(255, 255, 255, 0.8);
-            margin-bottom: 5px;
-        }
-        
-        .badge-container {
-            display: flex;
-            gap: 5px;
-            flex-wrap: wrap;
-        }
-        
-        .admin-badge {
-            background: linear-gradient(135deg, #7C3AED 0%, #6D28D9 100%);
-            color: white;
-            font-size: 10px;
-            padding: 2px 6px;
-            border-radius: 10px;
-            display: inline-block;
-        }
-        
-        .offline-badge {
-            background: #6B7280;
-            color: white;
-            font-size: 10px;
-            padding: 2px 6px;
-            border-radius: 10px;
-            display: inline-block;
-        }
-        
-        .logout-btn {
-            width: 100%;
-            padding: 10px;
-            background: rgba(239, 68, 68, 0.2);
-            border: 1px solid rgba(239, 68, 68, 0.3);
-            color: #fca5a5;
-            border-radius: 6px;
-            cursor: pointer;
-            transition: all 0.3s ease;
-            display: none;
-            align-items: center;
-            justify-content: center;
-            gap: 8px;
-            font-size: 0.85rem;
-        }
-        
-        .logout-btn:hover {
-            background: rgba(239, 68, 68, 0.3);
-            color: white;
-        }
-        
         /* CONTEÚDO PRINCIPAL */
         .main-content {
             flex: 1;
@@ -406,18 +346,6 @@
             border-radius: 4px;
         }
         
-        .firebase-status {
-            display: none !important;
-        }
-        
-        .sync-badge {
-            display: none !important;
-        }
-        
-        .login-tabs, .login-modal, .forgot-password-modal, #loginModal, #forgotPasswordModal, .login-error, .forgot-password-link {
-            display: none !important;
-        }
-        
         .status-radio-group {
             display: flex;
             gap: 20px;
@@ -436,51 +364,6 @@
             height: 16px;
             margin: 0;
         }
-        
-        .sync-status {
-            font-size: 11px;
-            padding: 2px 8px;
-            border-radius: 12px;
-            background-color: #f59e0b;
-            color: white;
-            margin-left: 8px;
-        }
-        
-        .admin-warning {
-            background-color: #FEF3C7;
-            border-left: 4px solid #F59E0B;
-            padding: 12px;
-            margin-bottom: 16px;
-            border-radius: 4px;
-            font-size: 13px;
-        }
-        
-        .force-sync-btn {
-            background-color: #3B82F6;
-            color: white;
-            border: none;
-            padding: 8px 16px;
-            border-radius: 6px;
-            font-size: 12px;
-            cursor: pointer;
-            display: inline-flex;
-            align-items: center;
-            gap: 8px;
-            margin-left: 12px;
-        }
-        
-        .force-sync-btn:hover {
-            background-color: #2563EB;
-        }
-        
-        .offline-badge {
-            background-color: #6B7280;
-            color: white;
-            font-size: 10px;
-            padding: 2px 6px;
-            border-radius: 4px;
-            margin-left: 8px;
-        }
 
         /* RESPONSIVIDADE */
         @media (max-width: 1024px) {
@@ -490,9 +373,7 @@
             
             .menu-header h2,
             .menu-header p,
-            .menu-button span,
-            .user-info-side .user-email,
-            .badge-container {
+            .menu-button span {
                 display: none;
             }
             
@@ -508,10 +389,6 @@
             
             .menu-footer {
                 padding: 10px;
-            }
-            
-            .logout-btn span {
-                display: none;
             }
             
             .main-content {
@@ -573,20 +450,11 @@
                 </button>
             </div>
             
-            <div class="menu-footer">
-                <div id="userInfoSide" class="user-info-side"></div>
-                <button class="logout-btn" id="btnLogout" style="display: none;">
-                    <i class="fas fa-sign-out-alt"></i>
-                    <span>Sair</span>
-                </button>
-            </div>
+            <div class="menu-footer"></div>
         </nav>
         
         <!-- CONTEÚDO PRINCIPAL -->
         <div class="main-content">
-            <!-- Status do Firebase (removido) -->
-            <div id="firebaseStatus" class="firebase-status" style="display: none !important;"></div>
-
             <!-- Notificação de Lançamento Duplicado -->
             <div id="duplicateNotification" class="duplicate-notification" style="display: none;">
                 <i class="fas fa-exclamation-triangle"></i>
@@ -1378,13 +1246,9 @@
         // VARIÁVEIS GLOBAIS
         // ============================================
         
-        let currentUser = null;
-        let isOnline = false;
-        let userData = null;
         let currentCalculationDetailId = null;
         let importData = null;
         let currentCollaboratorStatus = 'active';
-        let isAdmin = false;
         
         // Configurações de porcentagens
         let heNormalPorcentagem = 50;
