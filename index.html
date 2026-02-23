@@ -5,10 +5,6 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Calculadora de Adicionais e Reflexos da Folha de Pagamento</title>
     
-    <!-- Firebase SDK -->
-    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore-compat.js"></script>
-    
     <!-- SheetJS para importação de planilhas -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
     
@@ -19,6 +15,9 @@
     <!-- jsPDF para geração de PDFs -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.28/jspdf.plugin.autotable.min.js"></script>
+    
+    <!-- CryptoJS para hash de senha -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/crypto-js/4.1.1/crypto-js.min.js"></script>
     
     <style>
         :root {
@@ -232,6 +231,160 @@
             border: 1px solid rgba(255, 255, 255, 0.2);
             backdrop-filter: blur(10px);
             width: 100%;
+        }
+        
+        /* MODAL DE LOGIN */
+        .login-modal {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 10000;
+            backdrop-filter: blur(5px);
+        }
+        
+        .login-box {
+            background: white;
+            padding: 2.5rem;
+            border-radius: 20px;
+            width: 90%;
+            max-width: 400px;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.3);
+            position: relative;
+            z-index: 10001;
+            animation: fadeInUp 0.5s ease;
+        }
+        
+        @keyframes fadeInUp {
+            from {
+                opacity: 0;
+                transform: translateY(20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+        
+        .login-header {
+            text-align: center;
+            margin-bottom: 2rem;
+        }
+        
+        .login-header i {
+            font-size: 64px;
+            color: #667eea;
+            margin-bottom: 1rem;
+        }
+        
+        .login-header h1 {
+            color: #1800AD;
+            font-size: 1.8rem;
+            font-weight: 700;
+            margin-bottom: 0.5rem;
+        }
+        
+        .login-header p {
+            color: #6b7280;
+            font-size: 0.9rem;
+        }
+        
+        .login-error {
+            display: none;
+            background-color: #FEE2E2;
+            border: 1px solid #FECACA;
+            color: #DC2626;
+            padding: 12px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            font-size: 0.9rem;
+        }
+        
+        .login-error.show {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        
+        .input-group {
+            margin-bottom: 1.5rem;
+        }
+        
+        .input-group label {
+            display: block;
+            margin-bottom: 0.5rem;
+            color: #374151;
+            font-weight: 500;
+            font-size: 0.9rem;
+        }
+        
+        .input-wrapper {
+            position: relative;
+            display: flex;
+            align-items: center;
+        }
+        
+        .input-wrapper i {
+            position: absolute;
+            left: 12px;
+            color: #9ca3af;
+            font-size: 1.1rem;
+        }
+        
+        .input-wrapper input {
+            width: 100%;
+            padding: 12px 12px 12px 40px;
+            border: 2px solid #e5e7eb;
+            border-radius: 10px;
+            font-size: 1rem;
+            transition: all 0.3s ease;
+            outline: none;
+        }
+        
+        .input-wrapper input:focus {
+            border-color: #667eea;
+            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+        }
+        
+        .login-button {
+            width: 100%;
+            padding: 14px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            border-radius: 10px;
+            font-size: 1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+            margin-bottom: 1rem;
+        }
+        
+        .login-button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 20px rgba(102, 126, 234, 0.3);
+        }
+        
+        .login-button i {
+            font-size: 1.1rem;
+        }
+        
+        .login-footer {
+            text-align: center;
+            color: #6b7280;
+            font-size: 0.8rem;
+            margin-top: 1.5rem;
+            padding-top: 1.5rem;
+            border-top: 1px solid #e5e7eb;
         }
         
         /* OUTROS MODAIS */
@@ -459,13 +612,13 @@
             background-color: #fee2e2;
         }
         
-        .collaborator-table, .department-table, .history-table, .import-preview-table, .admin-table {
+        .collaborator-table, .department-table, .history-table, .import-preview-table {
             width: 100%;
             border-collapse: collapse;
             margin-top: 1rem;
         }
         
-        .collaborator-table th, .department-table th, .history-table th, .import-preview-table th, .admin-table th {
+        .collaborator-table th, .department-table th, .history-table th, .import-preview-table th {
             background-color: #f3f4f6;
             padding: 0.75rem;
             text-align: left;
@@ -474,12 +627,12 @@
             border-bottom: 2px solid #e5e7eb;
         }
         
-        .collaborator-table td, .department-table td, .history-table td, .import-preview-table td, .admin-table td {
+        .collaborator-table td, .department-table td, .history-table td, .import-preview-table td {
             padding: 0.75rem;
             border-bottom: 1px solid #e5e7eb;
         }
         
-        .collaborator-table tr:hover, .department-table tr:hover, .history-table tr:hover, .import-preview-table tr:hover, .admin-table tr:hover {
+        .collaborator-table tr:hover, .department-table tr:hover, .history-table tr:hover, .import-preview-table tr:hover {
             background-color: #f9fafb;
         }
         
@@ -542,40 +695,6 @@
             border-radius: 4px;
         }
         
-        .firebase-status {
-            position: fixed;
-            bottom: 10px;
-            right: 10px;
-            padding: 8px 12px;
-            border-radius: 6px;
-            font-size: 12px;
-            z-index: 9999;
-            display: flex;
-            align-items: center;
-            gap: 5px;
-            box-shadow: 0 2px 5px rgba(0,0,0,0.2);
-        }
-        
-        .firebase-connected {
-            background-color: #10B981;
-            color: white;
-        }
-        
-        .firebase-disconnected {
-            background-color: #EF4444;
-            color: white;
-        }
-        
-        .firebase-loading {
-            background-color: #F59E0B;
-            color: white;
-        }
-        
-        .firebase-offline {
-            background-color: #6B7280;
-            color: white;
-        }
-        
         .sync-badge {
             background-color: #3B82F6;
             color: white;
@@ -583,38 +702,6 @@
             border-radius: 12px;
             font-size: 11px;
             margin-left: 5px;
-        }
-        
-        .login-error {
-            display: none;
-            background-color: #FEE2E2;
-            border: 1px solid #FECACA;
-            color: #DC2626;
-            padding: 12px;
-            border-radius: 6px;
-            margin-bottom: 16px;
-        }
-        
-        .login-error.show {
-            display: block;
-        }
-        
-        .forgot-password-link {
-            text-align: right;
-            margin-top: 8px;
-        }
-        
-        .forgot-password-link button {
-            background: none;
-            border: none;
-            color: #3B82F6;
-            font-size: 0.85rem;
-            cursor: pointer;
-            text-decoration: underline;
-        }
-        
-        .forgot-password-link button:hover {
-            color: #1E40AF;
         }
         
         .success-message {
@@ -900,33 +987,6 @@
             font-weight: 600;
         }
         
-        .admin-user-item {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            padding: 12px;
-            border-bottom: 1px solid #e5e7eb;
-        }
-        
-        .admin-user-item:last-child {
-            border-bottom: none;
-        }
-        
-        .admin-user-email {
-            font-weight: 500;
-            color: var(--cor-titulo);
-        }
-        
-        .admin-user-date {
-            font-size: 12px;
-            color: #6b7280;
-        }
-        
-        .admin-actions {
-            display: flex;
-            gap: 8px;
-        }
-        
         .status-radio-group {
             display: flex;
             gap: 20px;
@@ -946,49 +1006,11 @@
             margin: 0;
         }
         
-        .sync-status {
-            font-size: 11px;
-            padding: 2px 8px;
-            border-radius: 12px;
-            background-color: #f59e0b;
-            color: white;
-            margin-left: 8px;
-        }
-        
-        .admin-warning {
-            background-color: #FEF3C7;
-            border-left: 4px solid #F59E0B;
-            padding: 12px;
-            margin-bottom: 16px;
-            border-radius: 4px;
-            font-size: 13px;
-        }
-        
-        .force-sync-btn {
-            background-color: #3B82F6;
-            color: white;
-            border: none;
-            padding: 8px 16px;
-            border-radius: 6px;
-            font-size: 12px;
-            cursor: pointer;
-            display: inline-flex;
-            align-items: center;
-            gap: 8px;
-            margin-left: 12px;
-        }
-        
-        .force-sync-btn:hover {
-            background-color: #2563EB;
-        }
-        
-        .offline-badge {
-            background-color: #6B7280;
-            color: white;
-            font-size: 10px;
-            padding: 2px 6px;
-            border-radius: 4px;
-            margin-left: 8px;
+        .login-attempts {
+            font-size: 0.8rem;
+            color: #6b7280;
+            margin-top: 0.5rem;
+            text-align: center;
         }
 
         /* RESPONSIVIDADE */
@@ -1050,7 +1072,56 @@
     </style>
 </head>
 <body>
-    <div class="app-container">
+    <!-- MODAL DE LOGIN ÚNICO -->
+    <div id="loginModal" class="login-modal">
+        <div class="login-box">
+            <div class="login-header">
+                <i class="fas fa-calculator"></i>
+                <h1>Folha de Pagamento</h1>
+                <p>Sistema de Cálculos de Adicionais e Reflexos</p>
+            </div>
+            
+            <div id="loginError" class="login-error">
+                <i class="fas fa-exclamation-circle"></i>
+                <span id="errorText">Mensagem de erro aparecerá aqui</span>
+            </div>
+            
+            <div class="input-group">
+                <label for="loginEmail">
+                    <i class="fas fa-envelope"></i> E-mail
+                </label>
+                <div class="input-wrapper">
+                    <i class="fas fa-envelope"></i>
+                    <input type="email" id="loginEmail" placeholder="seu@email.com" value="rh@wsnetfibra.com" autocomplete="off">
+                </div>
+            </div>
+            
+            <div class="input-group">
+                <label for="loginPassword">
+                    <i class="fas fa-lock"></i> Senha
+                </label>
+                <div class="input-wrapper">
+                    <i class="fas fa-lock"></i>
+                    <input type="password" id="loginPassword" placeholder="••••••••" autocomplete="off">
+                </div>
+            </div>
+            
+            <button id="btnLogin" class="login-button">
+                <i class="fas fa-sign-in-alt"></i>
+                Entrar no Sistema
+            </button>
+            
+            <div id="loginAttempts" class="login-attempts">
+                <i class="fas fa-shield-alt"></i> Sistema de acesso único e seguro
+            </div>
+            
+            <div class="login-footer">
+                <p>© 2024 - Sistema de Folha de Pagamento<br>Acesso restrito</p>
+            </div>
+        </div>
+    </div>
+
+    <div class="app-container" style="display: none;" id="appContainer">
         <!-- MENU LATERAL -->
         <nav class="side-menu">
             <div class="menu-header">
@@ -1080,25 +1151,28 @@
                     <i class="fas fa-cog"></i>
                     <span>Configurações</span>
                 </button>
-                <button class="menu-button" id="menuAdmin" style="display: none;">
-                    <i class="fas fa-shield-alt"></i>
-                    <span>Administração</span>
-                </button>
             </div>
             
             <div class="menu-footer">
-                <div class="offline-badge text-center py-2">
-                    <i class="fas fa-laptop mr-1"></i> Modo Local
+                <div class="user-info-side">
+                    <div class="user-email" id="userEmailSide">rh@wsnetfibra.com</div>
+                    <div class="badge-container">
+                        <span class="admin-badge">Administrador</span>
+                    </div>
                 </div>
+                <button class="logout-btn" id="btnLogout">
+                    <i class="fas fa-sign-out-alt"></i>
+                    <span>Sair do Sistema</span>
+                </button>
             </div>
         </nav>
         
         <!-- CONTEÚDO PRINCIPAL -->
         <div class="main-content">
             <!-- Status do Sistema -->
-            <div id="systemStatus" class="firebase-status firebase-offline">
-                <i class="fas fa-laptop"></i>
-                <span>Modo local - dados salvos apenas neste dispositivo</span>
+            <div class="firebase-status firebase-offline" style="background-color: #10B981;">
+                <i class="fas fa-check-circle"></i>
+                <span>Sessão ativa - Usuário: rh@wsnetfibra.com</span>
             </div>
 
             <!-- Notificação de Lançamento Duplicado -->
@@ -1155,51 +1229,6 @@
                         <div class="info-box">
                             <i class="fas fa-info-circle mr-2"></i>
                             As alterações nas porcentagens afetarão todos os novos cálculos realizados.
-                        </div>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Modal de Administração -->
-            <div class="modal" id="adminModal">
-                <div class="modal-content">
-                    <div class="modal-header">
-                        <h3 class="modal-title">
-                            <i class="fas fa-shield-alt mr-2"></i>
-                            Administração de Acessos
-                        </h3>
-                        <button class="modal-close" id="closeAdminModal">&times;</button>
-                    </div>
-                    <div class="modal-body">
-                        <div id="adminWarning" class="admin-warning">
-                            <i class="fas fa-exclamation-triangle mr-2"></i>
-                            <span>Funcionalidade disponível apenas com login</span>
-                        </div>
-                        
-                        <div class="mb-6">
-                            <div class="flex justify-between items-center mb-3">
-                                <h4 class="font-bold text-lg titulo-cor">Usuários do Sistema</h4>
-                                <span class="bg-gray-200 text-gray-700 px-3 py-1 rounded-full text-xs">0 usuários</span>
-                            </div>
-                            <p class="text-sm text-gray-600 mb-4">Apenas administradores podem gerenciar outros usuários.</p>
-                            
-                            <div id="adminUsersList">
-                                <div class="text-center py-8 text-gray-500">
-                                    <i class="fas fa-info-circle fa-3x mb-4 text-gray-400"></i>
-                                    <p class="text-lg">Funcionalidade desativada</p>
-                                    <p class="text-sm mt-2">O sistema está em modo local sem autenticação.</p>
-                                </div>
-                            </div>
-                        </div>
-                        
-                        <div class="mt-6 pt-4 border-t">
-                            <div class="flex justify-between items-center">
-                                <div>
-                                    <h5 class="font-bold">Informações</h5>
-                                    <p class="text-xs text-gray-500 mt-1">Para acessar funcionalidades de administração, é necessário fazer login.</p>
-                                </div>
-                                <span class="bg-gray-200 text-gray-700 px-3 py-1 rounded-full text-xs">Modo Local</span>
-                            </div>
                         </div>
                     </div>
                 </div>
@@ -1934,67 +1963,24 @@
 
     <script>
         // ============================================
-        // CONFIGURAÇÃO DO FIREBASE
-        // ============================================
-        
-        const firebaseConfig = {
-            apiKey: "AIzaSyBLgg6ICkkRMQimDU81tls9dxiNu-ubL1s",
-            authDomain: "folha-pagamento-app.firebaseapp.com",
-            projectId: "folha-pagamento-app",
-            storageBucket: "folha-pagamento-app.firebasestorage.app",
-            messagingSenderId: "482792411975",
-            appId: "1:482792411975:web:c884c56ce5a38313d33262"
-        };
-
-        // Inicialização do Firebase - apenas Firestore, sem Auth
-        let db;
-        let firebaseAvailable = false;
-        
-        try {
-            if (typeof firebase !== 'undefined') {
-                if (!firebase.apps || firebase.apps.length === 0) {
-                    firebase.initializeApp(firebaseConfig);
-                    console.log("✅ Firebase inicializado com sucesso!");
-                }
-                
-                try {
-                    db = firebase.firestore();
-                    
-                    try {
-                        db.settings({
-                            ignoreUndefinedProperties: true,
-                            merge: true
-                        });
-                        console.log("✅ Firestore configurado");
-                    } catch (settingsError) {
-                        console.warn("⚠️ Erro ao configurar Firestore:", settingsError);
-                    }
-                    
-                    firebaseAvailable = true;
-                    
-                } catch (firestoreError) {
-                    console.error("❌ Erro ao inicializar Firestore:", firestoreError);
-                    firebaseAvailable = false;
-                    db = null;
-                }
-                
-            } else {
-                console.error("❌ Firebase SDK não carregado!");
-            }
-        } catch (error) {
-            console.error("❌ Erro crítico ao inicializar Firebase:", error);
-            firebaseAvailable = false;
-        }
-
-        // ============================================
         // VARIÁVEIS GLOBAIS
         // ============================================
         
-        let isOnline = false;
+        // Credenciais únicas do sistema (armazenadas com hash para segurança)
+        const VALID_CREDENTIALS = {
+            email: 'rh@wsnetfibra.com',
+            // Hash da senha 'Wsnet1205' usando SHA256
+            passwordHash: CryptoJS.SHA256('Wsnet1205').toString()
+        };
+        
+        let isAuthenticated = false;
+        let loginAttempts = 0;
+        const MAX_ATTEMPTS = 5;
+        let lockUntil = null;
+        
         let currentCalculationDetailId = null;
         let importData = null;
         let currentCollaboratorStatus = 'active';
-        let isAdmin = false;
         
         // Configurações de porcentagens
         let heNormalPorcentagem = 50;
@@ -2024,9 +2010,123 @@
         const CALCULATIONS_STORAGE_KEY = 'folha_calculos_salvos';
         const DEPARTMENTS_STORAGE_KEY = 'folha_departamentos';
         const SETTINGS_STORAGE_KEY = 'folha_configuracoes';
+        const AUTH_STORAGE_KEY = 'folha_auth_status';
         
-        // SEM DADOS DE TESTE
         const DEFAULT_DEPARTMENTS = [];
+
+        // ============================================
+        // FUNÇÕES DE AUTENTICAÇÃO
+        // ============================================
+        
+        function checkSavedAuth() {
+            const savedAuth = localStorage.getItem(AUTH_STORAGE_KEY);
+            if (savedAuth) {
+                try {
+                    const authData = JSON.parse(savedAuth);
+                    // Verifica se o token ainda é válido (24 horas)
+                    if (authData.authenticated && (Date.now() - authData.timestamp) < 24 * 60 * 60 * 1000) {
+                        isAuthenticated = true;
+                        document.getElementById('loginModal').style.display = 'none';
+                        document.getElementById('appContainer').style.display = 'flex';
+                        return true;
+                    }
+                } catch (e) {
+                    console.error('Erro ao carregar autenticação salva:', e);
+                }
+            }
+            return false;
+        }
+        
+        function saveAuth() {
+            const authData = {
+                authenticated: true,
+                timestamp: Date.now(),
+                email: VALID_CREDENTIALS.email
+            };
+            localStorage.setItem(AUTH_STORAGE_KEY, JSON.stringify(authData));
+        }
+        
+        function clearAuth() {
+            localStorage.removeItem(AUTH_STORAGE_KEY);
+            isAuthenticated = false;
+        }
+        
+        function handleLogin() {
+            const emailInput = document.getElementById('loginEmail').value.trim();
+            const passwordInput = document.getElementById('loginPassword').value;
+            const errorElement = document.getElementById('loginError');
+            const errorText = document.getElementById('errorText');
+            
+            // Verifica se está bloqueado por muitas tentativas
+            if (lockUntil && Date.now() < lockUntil) {
+                const remainingMinutes = Math.ceil((lockUntil - Date.now()) / 60000);
+                errorText.textContent = `Muitas tentativas. Tente novamente em ${remainingMinutes} minutos.`;
+                errorElement.classList.add('show');
+                return;
+            }
+            
+            // Reseta o bloqueio se passou do tempo
+            if (lockUntil && Date.now() >= lockUntil) {
+                lockUntil = null;
+                loginAttempts = 0;
+            }
+            
+            // Verifica credenciais
+            if (emailInput !== VALID_CREDENTIALS.email) {
+                loginAttempts++;
+                errorText.textContent = 'E-mail ou senha incorretos.';
+                errorElement.classList.add('show');
+                
+                if (loginAttempts >= MAX_ATTEMPTS) {
+                    lockUntil = Date.now() + 15 * 60 * 1000; // Bloqueia por 15 minutos
+                    errorText.textContent = 'Muitas tentativas. Tente novamente em 15 minutos.';
+                }
+                
+                document.getElementById('loginPassword').value = '';
+                return;
+            }
+            
+            // Verifica a senha usando hash
+            const inputHash = CryptoJS.SHA256(passwordInput).toString();
+            if (inputHash !== VALID_CREDENTIALS.passwordHash) {
+                loginAttempts++;
+                errorText.textContent = 'E-mail ou senha incorretos.';
+                errorElement.classList.add('show');
+                
+                if (loginAttempts >= MAX_ATTEMPTS) {
+                    lockUntil = Date.now() + 15 * 60 * 1000; // Bloqueia por 15 minutos
+                    errorText.textContent = 'Muitas tentativas. Tente novamente em 15 minutos.';
+                }
+                
+                document.getElementById('loginPassword').value = '';
+                return;
+            }
+            
+            // Login bem-sucedido
+            isAuthenticated = true;
+            loginAttempts = 0;
+            lockUntil = null;
+            errorElement.classList.remove('show');
+            
+            // Salva autenticação
+            saveAuth();
+            
+            // Mostra o aplicativo
+            document.getElementById('loginModal').style.display = 'none';
+            document.getElementById('appContainer').style.display = 'flex';
+            
+            // Limpa os campos
+            document.getElementById('loginPassword').value = '';
+        }
+        
+        function handleLogout() {
+            clearAuth();
+            document.getElementById('appContainer').style.display = 'none';
+            document.getElementById('loginModal').style.display = 'flex';
+            document.getElementById('loginEmail').value = 'rh@wsnetfibra.com';
+            document.getElementById('loginPassword').value = '';
+            document.getElementById('loginError').classList.remove('show');
+        }
 
         // ============================================
         // FORMATAÇÃO DE MOEDA
@@ -2122,35 +2222,8 @@
         }
 
         // ============================================
-        // FUNÇÕES DE ADMINISTRAÇÃO (DESATIVADAS)
+        // FUNÇÕES DE ARMAZENAMENTO
         // ============================================
-        
-        function openAdminModal() {
-            document.getElementById('adminModal').classList.add('active');
-        }
-        
-        function closeAdminModal() {
-            document.getElementById('adminModal').classList.remove('active');
-        }
-
-        // ============================================
-        // FUNÇÕES DE ARMAZENAMENTO LOCAL
-        // ============================================
-        
-        function getDepartmentsFromStorage() {
-            const savedData = localStorage.getItem(DEPARTMENTS_STORAGE_KEY);
-            return savedData ? JSON.parse(savedData) : [];
-        }
-        
-        function getCollaboratorsFromStorage() {
-            const savedData = localStorage.getItem(COLLABORATORS_STORAGE_KEY);
-            return savedData ? JSON.parse(savedData) : [];
-        }
-        
-        function getCalculationsFromStorage() {
-            const savedData = localStorage.getItem(CALCULATIONS_STORAGE_KEY);
-            return savedData ? JSON.parse(savedData) : [];
-        }
         
         function getDepartments() {
             const savedData = localStorage.getItem(DEPARTMENTS_STORAGE_KEY);
@@ -4598,7 +4671,18 @@
         // ============================================
         
         document.addEventListener('DOMContentLoaded', () => {
-            console.log("🚀 Aplicação inicializada em modo local");
+            console.log("🚀 Aplicação inicializada com login único");
+            
+            // Verifica se já existe uma sessão salva
+            if (checkSavedAuth()) {
+                // Se já estiver autenticado, mostra o app
+                document.getElementById('loginModal').style.display = 'none';
+                document.getElementById('appContainer').style.display = 'flex';
+            } else {
+                // Mostra o modal de login
+                document.getElementById('loginModal').style.display = 'flex';
+                document.getElementById('appContainer').style.display = 'none';
+            }
             
             loadSettings();
             
@@ -4681,7 +4765,6 @@
             document.getElementById('menuHistory').addEventListener('click', showHistory);
             document.getElementById('menuReports').addEventListener('click', showReports);
             document.getElementById('menuSettings').addEventListener('click', openSettingsModal);
-            document.getElementById('menuAdmin').addEventListener('click', openAdminModal);
             
             document.getElementById('tabCollaborators').addEventListener('click', showCollaboratorsTab);
             document.getElementById('tabDepartments').addEventListener('click', showDepartmentsTab);
@@ -4726,8 +4809,6 @@
             
             document.getElementById('closeSettingsModal').addEventListener('click', closeSettingsModal);
             document.getElementById('saveSettings').addEventListener('click', saveSettings);
-            
-            document.getElementById('closeAdminModal').addEventListener('click', closeAdminModal);
             
             document.getElementById('collaboratorBaseSalary').addEventListener('input', function() {
                 formatCurrencyInput(this);
@@ -4925,11 +5006,25 @@
                 }
             });
             
-            document.getElementById('adminModal').addEventListener('click', function(event) {
-                if (event.target === this) {
-                    closeAdminModal();
+            // Eventos de login e logout
+            document.getElementById('btnLogin').addEventListener('click', handleLogin);
+            
+            // Permitir login com Enter
+            document.getElementById('loginPassword').addEventListener('keypress', (e) => {
+                if (e.key === 'Enter') {
+                    e.preventDefault();
+                    handleLogin();
                 }
             });
+            
+            document.getElementById('loginEmail').addEventListener('keypress', (e) => {
+                if (e.key === 'Enter') {
+                    e.preventDefault();
+                    document.getElementById('loginPassword').focus();
+                }
+            });
+            
+            document.getElementById('btnLogout').addEventListener('click', handleLogout);
             
             calcular();
             
