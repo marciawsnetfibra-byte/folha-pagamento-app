@@ -5,6 +5,10 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Calculadora de Adicionais e Reflexos da Folha de Pagamento</title>
     
+    <!-- Firebase SDK -->
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore-compat.js"></script>
+    
     <!-- SheetJS para importação de planilhas -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
     
@@ -150,6 +154,65 @@
             border-top: 1px solid rgba(255, 255, 255, 0.1);
         }
         
+        .user-info-side {
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 10px;
+            padding: 12px;
+            margin-bottom: 12px;
+        }
+        
+        .user-email {
+            font-size: 0.8rem;
+            word-break: break-all;
+            color: rgba(255, 255, 255, 0.8);
+            margin-bottom: 5px;
+        }
+        
+        .badge-container {
+            display: flex;
+            gap: 5px;
+            flex-wrap: wrap;
+        }
+        
+        .admin-badge {
+            background: linear-gradient(135deg, #7C3AED 0%, #6D28D9 100%);
+            color: white;
+            font-size: 10px;
+            padding: 2px 6px;
+            border-radius: 10px;
+            display: inline-block;
+        }
+        
+        .offline-badge {
+            background: #6B7280;
+            color: white;
+            font-size: 10px;
+            padding: 2px 6px;
+            border-radius: 10px;
+            display: inline-block;
+        }
+        
+        .logout-btn {
+            width: 100%;
+            padding: 10px;
+            background: rgba(239, 68, 68, 0.2);
+            border: 1px solid rgba(239, 68, 68, 0.3);
+            color: #fca5a5;
+            border-radius: 6px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            font-size: 0.85rem;
+        }
+        
+        .logout-btn:hover {
+            background: rgba(239, 68, 68, 0.3);
+            color: white;
+        }
+        
         /* CONTEÚDO PRINCIPAL */
         .main-content {
             flex: 1;
@@ -169,6 +232,139 @@
             border: 1px solid rgba(255, 255, 255, 0.2);
             backdrop-filter: blur(10px);
             width: 100%;
+        }
+        
+        /* OUTROS MODAIS */
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.7);
+            backdrop-filter: blur(5px);
+            align-items: center;
+            justify-content: center;
+            z-index: 2000;
+        }
+        
+        .modal.active {
+            display: flex;
+        }
+        
+        .modal-content {
+            background-color: white;
+            border-radius: 10px;
+            width: 90%;
+            max-width: 800px;
+            max-height: 90vh;
+            overflow-y: auto;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+            position: relative;
+            z-index: 2001;
+            animation: modalFadeIn 0.3s ease;
+        }
+        
+        @keyframes modalFadeIn {
+            from {
+                opacity: 0;
+                transform: scale(0.95);
+            }
+            to {
+                opacity: 1;
+                transform: scale(1);
+            }
+        }
+        
+        .modal-header {
+            padding: 1.25rem 1.5rem;
+            border-bottom: 1px solid #e5e7eb;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            background-color: #f9fafb;
+            border-radius: 10px 10px 0 0;
+        }
+        
+        .modal-title {
+            font-weight: 600;
+            color: var(--cor-titulo);
+            font-size: 1.25rem;
+        }
+        
+        .modal-close {
+            background: none;
+            border: none;
+            font-size: 1.5rem;
+            cursor: pointer;
+            color: #6b7280;
+            transition: color 0.2s;
+        }
+        
+        .modal-close:hover {
+            color: #374151;
+        }
+        
+        .modal-body {
+            padding: 1.5rem;
+        }
+        
+        input[type="text"], input[type="number"], select, input[type="month"], input[type="date"], input[type="file"], input[type="password"], input[type="email"] {
+            border: 1px solid #ccc;
+            padding: 8px;
+            border-radius: 6px;
+            width: 100%;
+            box-sizing: border-box;
+            height: 40px !important;
+            line-height: normal;
+        }
+        
+        .duplicate-notification {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            background-color: #FEF3C7;
+            border-left: 4px solid #F59E0B;
+            color: #92400E;
+            padding: 16px 20px;
+            border-radius: 8px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+            z-index: 9999;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            animation: slideIn 0.3s ease-out;
+            max-width: 400px;
+        }
+        
+        .duplicate-notification i {
+            font-size: 20px;
+            color: #F59E0B;
+        }
+        
+        .duplicate-notification .close-btn {
+            margin-left: auto;
+            cursor: pointer;
+            color: #6B7280;
+            background: none;
+            border: none;
+            font-size: 16px;
+        }
+        
+        .duplicate-notification .close-btn:hover {
+            color: #374151;
+        }
+        
+        @keyframes slideIn {
+            from {
+                transform: translateX(100%);
+                opacity: 0;
+            }
+            to {
+                transform: translateX(0);
+                opacity: 1;
+            }
         }
         
         .settings-panel {
@@ -263,13 +459,13 @@
             background-color: #fee2e2;
         }
         
-        .collaborator-table, .department-table, .history-table, .import-preview-table {
+        .collaborator-table, .department-table, .history-table, .import-preview-table, .admin-table {
             width: 100%;
             border-collapse: collapse;
             margin-top: 1rem;
         }
         
-        .collaborator-table th, .department-table th, .history-table th, .import-preview-table th {
+        .collaborator-table th, .department-table th, .history-table th, .import-preview-table th, .admin-table th {
             background-color: #f3f4f6;
             padding: 0.75rem;
             text-align: left;
@@ -278,12 +474,12 @@
             border-bottom: 2px solid #e5e7eb;
         }
         
-        .collaborator-table td, .department-table td, .history-table td, .import-preview-table td {
+        .collaborator-table td, .department-table td, .history-table td, .import-preview-table td, .admin-table td {
             padding: 0.75rem;
             border-bottom: 1px solid #e5e7eb;
         }
         
-        .collaborator-table tr:hover, .department-table tr:hover, .history-table tr:hover, .import-preview-table tr:hover {
+        .collaborator-table tr:hover, .department-table tr:hover, .history-table tr:hover, .import-preview-table tr:hover, .admin-table tr:hover {
             background-color: #f9fafb;
         }
         
@@ -346,6 +542,391 @@
             border-radius: 4px;
         }
         
+        .firebase-status {
+            position: fixed;
+            bottom: 10px;
+            right: 10px;
+            padding: 8px 12px;
+            border-radius: 6px;
+            font-size: 12px;
+            z-index: 9999;
+            display: flex;
+            align-items: center;
+            gap: 5px;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+        }
+        
+        .firebase-connected {
+            background-color: #10B981;
+            color: white;
+        }
+        
+        .firebase-disconnected {
+            background-color: #EF4444;
+            color: white;
+        }
+        
+        .firebase-loading {
+            background-color: #F59E0B;
+            color: white;
+        }
+        
+        .firebase-offline {
+            background-color: #6B7280;
+            color: white;
+        }
+        
+        .sync-badge {
+            background-color: #3B82F6;
+            color: white;
+            padding: 2px 8px;
+            border-radius: 12px;
+            font-size: 11px;
+            margin-left: 5px;
+        }
+        
+        .login-error {
+            display: none;
+            background-color: #FEE2E2;
+            border: 1px solid #FECACA;
+            color: #DC2626;
+            padding: 12px;
+            border-radius: 6px;
+            margin-bottom: 16px;
+        }
+        
+        .login-error.show {
+            display: block;
+        }
+        
+        .forgot-password-link {
+            text-align: right;
+            margin-top: 8px;
+        }
+        
+        .forgot-password-link button {
+            background: none;
+            border: none;
+            color: #3B82F6;
+            font-size: 0.85rem;
+            cursor: pointer;
+            text-decoration: underline;
+        }
+        
+        .forgot-password-link button:hover {
+            color: #1E40AF;
+        }
+        
+        .success-message {
+            background-color: #d1fae5;
+            border: 1px solid #a7f3d0;
+            color: #065f46;
+            padding: 12px;
+            border-radius: 6px;
+            margin-bottom: 16px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        
+        .warning-message {
+            background-color: #fffbeb;
+            border: 1px solid #fcd34d;
+            color: #92400e;
+            padding: 12px;
+            border-radius: 6px;
+            margin-bottom: 16px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        
+        .column-toggle-btn {
+            padding: 6px 12px;
+            border: 1px solid #d1d5db;
+            border-radius: 4px;
+            background-color: white;
+            cursor: pointer;
+            font-size: 12px;
+            transition: all 0.2s;
+        }
+        
+        .column-toggle-btn.active {
+            background-color: var(--cor-titulo);
+            color: white;
+            border-color: var(--cor-titulo);
+        }
+        
+        .column-toggle-btn:not(.active):hover {
+            background-color: #f3f4f6;
+        }
+        
+        .report-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 1rem;
+            font-size: 14px;
+        }
+        
+        .report-table th {
+            background-color: var(--cor-titulo);
+            color: white;
+            padding: 10px 8px;
+            text-align: left;
+            font-weight: 600;
+            position: sticky;
+            top: 0;
+            z-index: 10;
+        }
+        
+        .report-table td {
+            padding: 8px;
+            border-bottom: 1px solid #e5e7eb;
+        }
+        
+        .report-table tr:hover {
+            background-color: #f0f4ff;
+        }
+        
+        .report-table tr.total-row {
+            background-color: #e0f2fe;
+            font-weight: bold;
+        }
+        
+        .report-summary {
+            background-color: #f0f9ff;
+            border: 1px solid #bae6fd;
+            border-radius: 8px;
+            padding: 15px;
+            margin-top: 20px;
+        }
+        
+        .no-results {
+            text-align: center;
+            padding: 40px;
+            color: #6b7280;
+        }
+        
+        .filter-badge {
+            display: inline-flex;
+            align-items: center;
+            background-color: #e0f2fe;
+            color: #0369a1;
+            padding: 4px 10px;
+            border-radius: 20px;
+            font-size: 12px;
+            margin-right: 8px;
+            margin-bottom: 8px;
+        }
+        
+        .filter-badge i {
+            margin-left: 6px;
+            cursor: pointer;
+        }
+        
+        .reflexo-destaque {
+            background-color: #f0f9ff;
+            border-left: 4px solid #0369a1;
+            padding: 10px;
+            margin: 5px 0;
+            border-radius: 4px;
+        }
+        
+        .reflexo-total {
+            font-weight: bold;
+            color: #0369a1;
+        }
+        
+        .view-mode input, .view-mode select {
+            background-color: #f3f4f6 !important;
+            color: #4b5563 !important;
+            border: 1px solid #d1d5db !important;
+            cursor: not-allowed;
+        }
+        
+        .edit-btn {
+            background-color: #3B82F6;
+            color: white;
+            padding: 8px 16px;
+            border-radius: 6px;
+            border: none;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 5px;
+        }
+        
+        .edit-btn:hover {
+            background-color: #2563EB;
+        }
+        
+        .payment-info {
+            background-color: #f8fafc;
+            border: 1px solid #e2e8f0;
+            border-radius: 8px;
+            padding: 16px;
+            margin-top: 16px;
+        }
+        
+        .payment-info h3 {
+            font-size: 1rem;
+            font-weight: 600;
+            color: var(--cor-titulo);
+            margin-bottom: 12px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        
+        .payment-info h3 i {
+            color: #059669;
+        }
+        
+        .payment-info .grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 16px;
+        }
+        
+        .payment-info label {
+            font-size: 0.875rem;
+            color: #4b5563;
+            margin-bottom: 4px;
+            display: block;
+        }
+        
+        .edit-mode input, .edit-mode select {
+            background-color: white !important;
+            color: #111827 !important;
+            border: 1px solid #d1d5db !important;
+            cursor: text !important;
+        }
+        
+        .edit-mode input[readonly], .edit-mode select[readonly] {
+            background-color: #f3f4f6 !important;
+        }
+        
+        .periculosidade-info {
+            background-color: #fef9e7;
+            border-left: 4px solid #f39c12;
+            padding: 10px 15px;
+            margin-top: 10px;
+            border-radius: 4px;
+            font-size: 0.85rem;
+        }
+        
+        .periculosidade-detalhe {
+            font-size: 0.8rem;
+            color: #555;
+            margin-top: 5px;
+            padding-top: 5px;
+            border-top: 1px dashed #ccc;
+        }
+        
+        .success-message {
+            background-color: #d1fae5;
+            border: 1px solid #a7f3d0;
+            color: #065f46;
+            padding: 12px;
+            border-radius: 6px;
+            margin-bottom: 16px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        
+        .warning-message {
+            background-color: #fffbeb;
+            border: 1px solid #fcd34d;
+            color: #92400e;
+            padding: 12px;
+            border-radius: 6px;
+            margin-bottom: 16px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        
+        .import-stats {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            gap: 12px;
+            margin: 16px 0;
+        }
+        
+        .stat-card {
+            background-color: #f9fafb;
+            border: 1px solid #e5e7eb;
+            border-radius: 8px;
+            padding: 12px;
+            text-align: center;
+        }
+        
+        .stat-number {
+            font-size: 24px;
+            font-weight: bold;
+            color: var(--cor-titulo);
+        }
+        
+        .stat-label {
+            font-size: 12px;
+            color: #6b7280;
+            margin-top: 4px;
+        }
+        
+        .file-upload-area {
+            border: 2px dashed #d1d5db;
+            border-radius: 8px;
+            padding: 20px;
+            text-align: center;
+            background-color: #f9fafb;
+            transition: all 0.3s ease;
+            cursor: pointer;
+        }
+        
+        .file-upload-area:hover {
+            border-color: var(--cor-importar);
+            background-color: #f0fdf4;
+        }
+        
+        .file-upload-area i {
+            font-size: 48px;
+            color: var(--cor-importar);
+            margin-bottom: 12px;
+        }
+        
+        .moeda-br {
+            color: var(--cor-titulo);
+            font-weight: 600;
+        }
+        
+        .admin-user-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 12px;
+            border-bottom: 1px solid #e5e7eb;
+        }
+        
+        .admin-user-item:last-child {
+            border-bottom: none;
+        }
+        
+        .admin-user-email {
+            font-weight: 500;
+            color: var(--cor-titulo);
+        }
+        
+        .admin-user-date {
+            font-size: 12px;
+            color: #6b7280;
+        }
+        
+        .admin-actions {
+            display: flex;
+            gap: 8px;
+        }
+        
         .status-radio-group {
             display: flex;
             gap: 20px;
@@ -364,6 +945,51 @@
             height: 16px;
             margin: 0;
         }
+        
+        .sync-status {
+            font-size: 11px;
+            padding: 2px 8px;
+            border-radius: 12px;
+            background-color: #f59e0b;
+            color: white;
+            margin-left: 8px;
+        }
+        
+        .admin-warning {
+            background-color: #FEF3C7;
+            border-left: 4px solid #F59E0B;
+            padding: 12px;
+            margin-bottom: 16px;
+            border-radius: 4px;
+            font-size: 13px;
+        }
+        
+        .force-sync-btn {
+            background-color: #3B82F6;
+            color: white;
+            border: none;
+            padding: 8px 16px;
+            border-radius: 6px;
+            font-size: 12px;
+            cursor: pointer;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            margin-left: 12px;
+        }
+        
+        .force-sync-btn:hover {
+            background-color: #2563EB;
+        }
+        
+        .offline-badge {
+            background-color: #6B7280;
+            color: white;
+            font-size: 10px;
+            padding: 2px 6px;
+            border-radius: 4px;
+            margin-left: 8px;
+        }
 
         /* RESPONSIVIDADE */
         @media (max-width: 1024px) {
@@ -373,7 +999,9 @@
             
             .menu-header h2,
             .menu-header p,
-            .menu-button span {
+            .menu-button span,
+            .user-info-side .user-email,
+            .badge-container {
                 display: none;
             }
             
@@ -389,6 +1017,10 @@
             
             .menu-footer {
                 padding: 10px;
+            }
+            
+            .logout-btn span {
+                display: none;
             }
             
             .main-content {
@@ -448,13 +1080,27 @@
                     <i class="fas fa-cog"></i>
                     <span>Configurações</span>
                 </button>
+                <button class="menu-button" id="menuAdmin" style="display: none;">
+                    <i class="fas fa-shield-alt"></i>
+                    <span>Administração</span>
+                </button>
             </div>
             
-            <div class="menu-footer"></div>
+            <div class="menu-footer">
+                <div class="offline-badge text-center py-2">
+                    <i class="fas fa-laptop mr-1"></i> Modo Local
+                </div>
+            </div>
         </nav>
         
         <!-- CONTEÚDO PRINCIPAL -->
         <div class="main-content">
+            <!-- Status do Sistema -->
+            <div id="systemStatus" class="firebase-status firebase-offline">
+                <i class="fas fa-laptop"></i>
+                <span>Modo local - dados salvos apenas neste dispositivo</span>
+            </div>
+
             <!-- Notificação de Lançamento Duplicado -->
             <div id="duplicateNotification" class="duplicate-notification" style="display: none;">
                 <i class="fas fa-exclamation-triangle"></i>
@@ -509,6 +1155,51 @@
                         <div class="info-box">
                             <i class="fas fa-info-circle mr-2"></i>
                             As alterações nas porcentagens afetarão todos os novos cálculos realizados.
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Modal de Administração -->
+            <div class="modal" id="adminModal">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h3 class="modal-title">
+                            <i class="fas fa-shield-alt mr-2"></i>
+                            Administração de Acessos
+                        </h3>
+                        <button class="modal-close" id="closeAdminModal">&times;</button>
+                    </div>
+                    <div class="modal-body">
+                        <div id="adminWarning" class="admin-warning">
+                            <i class="fas fa-exclamation-triangle mr-2"></i>
+                            <span>Funcionalidade disponível apenas com login</span>
+                        </div>
+                        
+                        <div class="mb-6">
+                            <div class="flex justify-between items-center mb-3">
+                                <h4 class="font-bold text-lg titulo-cor">Usuários do Sistema</h4>
+                                <span class="bg-gray-200 text-gray-700 px-3 py-1 rounded-full text-xs">0 usuários</span>
+                            </div>
+                            <p class="text-sm text-gray-600 mb-4">Apenas administradores podem gerenciar outros usuários.</p>
+                            
+                            <div id="adminUsersList">
+                                <div class="text-center py-8 text-gray-500">
+                                    <i class="fas fa-info-circle fa-3x mb-4 text-gray-400"></i>
+                                    <p class="text-lg">Funcionalidade desativada</p>
+                                    <p class="text-sm mt-2">O sistema está em modo local sem autenticação.</p>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="mt-6 pt-4 border-t">
+                            <div class="flex justify-between items-center">
+                                <div>
+                                    <h5 class="font-bold">Informações</h5>
+                                    <p class="text-xs text-gray-500 mt-1">Para acessar funcionalidades de administração, é necessário fazer login.</p>
+                                </div>
+                                <span class="bg-gray-200 text-gray-700 px-3 py-1 rounded-full text-xs">Modo Local</span>
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -1243,12 +1934,67 @@
 
     <script>
         // ============================================
+        // CONFIGURAÇÃO DO FIREBASE
+        // ============================================
+        
+        const firebaseConfig = {
+            apiKey: "AIzaSyBLgg6ICkkRMQimDU81tls9dxiNu-ubL1s",
+            authDomain: "folha-pagamento-app.firebaseapp.com",
+            projectId: "folha-pagamento-app",
+            storageBucket: "folha-pagamento-app.firebasestorage.app",
+            messagingSenderId: "482792411975",
+            appId: "1:482792411975:web:c884c56ce5a38313d33262"
+        };
+
+        // Inicialização do Firebase - apenas Firestore, sem Auth
+        let db;
+        let firebaseAvailable = false;
+        
+        try {
+            if (typeof firebase !== 'undefined') {
+                if (!firebase.apps || firebase.apps.length === 0) {
+                    firebase.initializeApp(firebaseConfig);
+                    console.log("✅ Firebase inicializado com sucesso!");
+                }
+                
+                try {
+                    db = firebase.firestore();
+                    
+                    try {
+                        db.settings({
+                            ignoreUndefinedProperties: true,
+                            merge: true
+                        });
+                        console.log("✅ Firestore configurado");
+                    } catch (settingsError) {
+                        console.warn("⚠️ Erro ao configurar Firestore:", settingsError);
+                    }
+                    
+                    firebaseAvailable = true;
+                    
+                } catch (firestoreError) {
+                    console.error("❌ Erro ao inicializar Firestore:", firestoreError);
+                    firebaseAvailable = false;
+                    db = null;
+                }
+                
+            } else {
+                console.error("❌ Firebase SDK não carregado!");
+            }
+        } catch (error) {
+            console.error("❌ Erro crítico ao inicializar Firebase:", error);
+            firebaseAvailable = false;
+        }
+
+        // ============================================
         // VARIÁVEIS GLOBAIS
         // ============================================
         
+        let isOnline = false;
         let currentCalculationDetailId = null;
         let importData = null;
         let currentCollaboratorStatus = 'active';
+        let isAdmin = false;
         
         // Configurações de porcentagens
         let heNormalPorcentagem = 50;
@@ -1278,6 +2024,9 @@
         const CALCULATIONS_STORAGE_KEY = 'folha_calculos_salvos';
         const DEPARTMENTS_STORAGE_KEY = 'folha_departamentos';
         const SETTINGS_STORAGE_KEY = 'folha_configuracoes';
+        
+        // SEM DADOS DE TESTE
+        const DEFAULT_DEPARTMENTS = [];
 
         // ============================================
         // FORMATAÇÃO DE MOEDA
@@ -1344,6 +2093,9 @@
                 'heNormalPorcentagemDisplay',
                 'heSobreavisoPorcentagemDisplay',
                 'adicionalNoturnoPorcentagemDisplay',
+                'heNormalPorcentagemReflexoDisplay',
+                'heSobreavisoPorcentagemReflexoDisplay',
+                'adicionalNoturnoPorcentagemReflexoDisplay',
                 'heNormalPorcentagemBaseDisplay'
             ];
             
@@ -1370,8 +2122,35 @@
         }
 
         // ============================================
-        // FUNÇÕES DE ARMAZENAMENTO
+        // FUNÇÕES DE ADMINISTRAÇÃO (DESATIVADAS)
         // ============================================
+        
+        function openAdminModal() {
+            document.getElementById('adminModal').classList.add('active');
+        }
+        
+        function closeAdminModal() {
+            document.getElementById('adminModal').classList.remove('active');
+        }
+
+        // ============================================
+        // FUNÇÕES DE ARMAZENAMENTO LOCAL
+        // ============================================
+        
+        function getDepartmentsFromStorage() {
+            const savedData = localStorage.getItem(DEPARTMENTS_STORAGE_KEY);
+            return savedData ? JSON.parse(savedData) : [];
+        }
+        
+        function getCollaboratorsFromStorage() {
+            const savedData = localStorage.getItem(COLLABORATORS_STORAGE_KEY);
+            return savedData ? JSON.parse(savedData) : [];
+        }
+        
+        function getCalculationsFromStorage() {
+            const savedData = localStorage.getItem(CALCULATIONS_STORAGE_KEY);
+            return savedData ? JSON.parse(savedData) : [];
+        }
         
         function getDepartments() {
             const savedData = localStorage.getItem(DEPARTMENTS_STORAGE_KEY);
@@ -1388,15 +2167,15 @@
             return savedData ? JSON.parse(savedData) : [];
         }
         
-        function saveDepartments(departments) {
+        function saveDepartmentsToStorage(departments) {
             localStorage.setItem(DEPARTMENTS_STORAGE_KEY, JSON.stringify(departments));
         }
         
-        function saveCollaborators(collaborators) {
+        function saveCollaboratorsToStorage(collaborators) {
             localStorage.setItem(COLLABORATORS_STORAGE_KEY, JSON.stringify(collaborators));
         }
         
-        function saveCalculations(calculations) {
+        function saveCalculationsToStorage(calculations) {
             localStorage.setItem(CALCULATIONS_STORAGE_KEY, JSON.stringify(calculations));
         }
 
@@ -1704,7 +2483,7 @@
                 }
             });
             
-            saveDepartments(departments);
+            saveDepartmentsToStorage(departments);
             
             importData.forEach(item => {
                 const existingCollaborator = collaborators.find(c => 
@@ -1740,7 +2519,7 @@
                 }
             });
             
-            saveCollaborators(collaborators);
+            saveCollaboratorsToStorage(collaborators);
             
             updateDepartmentSelect();
             updateCollaboratorSelect();
@@ -1916,6 +2695,8 @@
             const periculosidadeValorProRata = usaPericulosidade ? 
                 (periculosidadeValorMensal / diasBaseMensal) * diasTrabalhadosAjustados : 0;
 
+            const periculosidadeValorDiario = usaPericulosidade ? periculosidadeValorMensal / diasBaseMensal : 0;
+
             const horaNormal = salarioBase / divisorMensal;
             const periculosidadeHora = periculosidadeValorMensal / divisorMensal; 
             
@@ -2011,7 +2792,6 @@
             const filterDepartment = document.getElementById('filterDepartment');
             const reportDepartment = document.getElementById('reportDepartment');
             
-            if (!select) return;
             select.innerHTML = '<option value="">Selecione...</option>';
             if (filterDepartment) {
                 filterDepartment.innerHTML = '<option value="">Todos os departamentos</option>';
@@ -2243,7 +3023,7 @@
                 collaborators.push(newCollaborator);
             }
             
-            saveCollaborators(collaborators);
+            saveCollaboratorsToStorage(collaborators);
             
             closeModal();
             updateCollaboratorSelect();
@@ -2274,7 +3054,6 @@
             const collaborators = getCollaborators();
             const select = document.getElementById('collaboratorSelect');
             
-            if (!select) return;
             const currentSelection = select.value;
             select.innerHTML = '<option value="">-- Selecione um colaborador --</option>';
             
@@ -2465,7 +3244,7 @@
             const collaborators = getCollaborators();
             const filteredCollaborators = collaborators.filter(c => c.id !== id);
             
-            saveCollaborators(filteredCollaborators);
+            saveCollaboratorsToStorage(filteredCollaborators);
             
             closeDeleteCollaboratorModal();
             updateCollaboratorSelect();
@@ -2496,7 +3275,7 @@
             collaborators[collaboratorIndex].active = true;
             collaborators[collaboratorIndex].updatedAt = new Date().toISOString();
             
-            saveCollaborators(collaborators);
+            saveCollaboratorsToStorage(collaborators);
             
             updateCollaboratorSelect();
             renderCollaboratorsTable(currentCollaboratorStatus);
@@ -2631,7 +3410,7 @@
                 alert(`Cálculo para ${collaborator.name} salvo com sucesso!`);
             }
             
-            saveCalculations(calculations);
+            saveCalculationsToStorage(calculations);
             
             if (document.getElementById('historyContent').classList.contains('hidden') === false) {
                 renderHistoryTable();
@@ -2643,8 +3422,6 @@
         function renderHistoryTable(filters = {}) {
             const calculations = getSavedCalculations();
             const container = document.getElementById('historyTableBody');
-            
-            if (!container) return;
             
             let filteredCalculations = [...calculations];
             
@@ -2737,7 +3514,7 @@
             const calculations = getSavedCalculations();
             const filteredCalculations = calculations.filter(c => c.id !== id);
             
-            saveCalculations(filteredCalculations);
+            saveCalculationsToStorage(filteredCalculations);
             renderHistoryTable();
             alert('Cálculo excluído do histórico com sucesso!');
         }
@@ -2775,6 +3552,10 @@
                             <div>
                                 <span class="text-sm text-gray-600">Data do Cálculo:</span>
                                 <p class="font-medium">${calculation.timestamp}</p>
+                            </div>
+                            <div>
+                                <span class="text-sm text-gray-600">Status:</span>
+                                <p class="font-medium">Salvo localmente</p>
                             </div>
                         </div>
                     </div>
@@ -3054,7 +3835,7 @@
             }
             
             calculations[calculationIndex] = updatedCalculation;
-            saveCalculations(calculations);
+            saveCalculationsToStorage(calculations);
             
             alert(`Cálculo atualizado com sucesso!`);
             
@@ -3115,7 +3896,7 @@
                     dept.id === window.editingDepartmentId ? newDepartment : dept
                 );
                 
-                saveDepartments(updatedDepartments);
+                saveDepartmentsToStorage(updatedDepartments);
                 window.editingDepartmentId = null;
             } else {
                 newDepartment = {
@@ -3127,7 +3908,7 @@
                 };
                 
                 departments.push(newDepartment);
-                saveDepartments(departments);
+                saveDepartmentsToStorage(departments);
             }
             
             closeDepartmentModal();
@@ -3194,10 +3975,10 @@
                     }
                     return collaborator;
                 });
-                saveCollaborators(updatedCollaborators);
+                saveCollaboratorsToStorage(updatedCollaborators);
             }
             
-            saveDepartments(filteredDepartments);
+            saveDepartmentsToStorage(filteredDepartments);
             
             updateDepartmentSelect();
             renderDepartmentsTable();
@@ -3424,8 +4205,6 @@
                 return;
             }
             
-            updateActiveFilters();
-            
             const reportData = consolidateReportData(filteredCalculations);
             
             updateReportTable(reportData);
@@ -3608,99 +4387,6 @@
             return count;
         }
         
-        function updateActiveFilters() {
-            const activeFiltersDiv = document.getElementById('activeFilters');
-            const filterBadgesDiv = document.getElementById('filterBadges');
-            
-            if (Object.keys(activeReportFilters).length === 0) {
-                if (activeFiltersDiv) activeFiltersDiv.classList.add('hidden');
-                return;
-            }
-            
-            if (activeFiltersDiv) activeFiltersDiv.classList.remove('hidden');
-            
-            let badgesHtml = '';
-            
-            if (activeReportFilters.colaborador) {
-                const collaborator = getCollaborators().find(c => c.id == activeReportFilters.colaborador);
-                if (collaborator) {
-                    badgesHtml += `
-                        <span class="filter-badge">
-                            Colaborador: ${collaborator.name}
-                            <i class="fas fa-times remove-filter" data-filter="colaborador"></i>
-                        </span>
-                    `;
-                }
-            }
-            
-            if (activeReportFilters.departamento) {
-                badgesHtml += `
-                    <span class="filter-badge">
-                        Departamento: ${activeReportFilters.departamento}
-                        <i class="fas fa-times remove-filter" data-filter="departamento"></i>
-                    </span>
-                `;
-            }
-            
-            if (activeReportFilters.mes) {
-                badgesHtml += `
-                    <span class="filter-badge">
-                        Mês: ${activeReportFilters.mes}
-                        <i class="fas fa-times remove-filter" data-filter="mes"></i>
-                    </span>
-                `;
-            }
-            
-            if (activeReportFilters.dataInicio) {
-                badgesHtml += `
-                    <span class="filter-badge">
-                        De: ${activeReportFilters.dataInicio}
-                        <i class="fas fa-times remove-filter" data-filter="dataInicio"></i>
-                    </span>
-                `;
-            }
-            
-            if (activeReportFilters.dataFim) {
-                badgesHtml += `
-                    <span class="filter-badge">
-                        Até: ${activeReportFilters.dataFim}
-                        <i class="fas fa-times remove-filter" data-filter="dataFim"></i>
-                    </span>
-                `;
-            }
-            
-            if (filterBadgesDiv) filterBadgesDiv.innerHTML = badgesHtml;
-            
-            document.querySelectorAll('.remove-filter').forEach(button => {
-                button.addEventListener('click', function() {
-                    const filter = this.getAttribute('data-filter');
-                    removeFilter(filter);
-                });
-            });
-        }
-        
-        function removeFilter(filter) {
-            switch(filter) {
-                case 'colaborador':
-                    document.getElementById('reportCollaborator').value = '';
-                    break;
-                case 'departamento':
-                    document.getElementById('reportDepartment').value = '';
-                    break;
-                case 'mes':
-                    document.getElementById('reportMonth').value = '';
-                    break;
-                case 'dataInicio':
-                    document.getElementById('reportStartDate').value = '';
-                    break;
-                case 'dataFim':
-                    document.getElementById('reportEndDate').value = '';
-                    break;
-            }
-            
-            generateReport();
-        }
-        
         function clearReportFilters() {
             document.getElementById('reportCollaborator').value = '';
             document.getElementById('reportDepartment').value = '';
@@ -3709,7 +4395,6 @@
             document.getElementById('reportEndDate').value = '';
             
             activeReportFilters = {};
-            document.getElementById('activeFilters').classList.add('hidden');
             
             document.getElementById('reportTableBody').innerHTML = `
                 <tr>
@@ -3913,7 +4598,7 @@
         // ============================================
         
         document.addEventListener('DOMContentLoaded', () => {
-            console.log("🚀 Aplicação inicializada - Modo Local");
+            console.log("🚀 Aplicação inicializada em modo local");
             
             loadSettings();
             
@@ -3923,8 +4608,6 @@
             monthInput.value = getCurrentMonthString();
             
             handleMonthChange(true);
-            
-            getDepartments();
             
             updateDepartmentSelect();
             updateCollaboratorSelect();
@@ -3998,6 +4681,7 @@
             document.getElementById('menuHistory').addEventListener('click', showHistory);
             document.getElementById('menuReports').addEventListener('click', showReports);
             document.getElementById('menuSettings').addEventListener('click', openSettingsModal);
+            document.getElementById('menuAdmin').addEventListener('click', openAdminModal);
             
             document.getElementById('tabCollaborators').addEventListener('click', showCollaboratorsTab);
             document.getElementById('tabDepartments').addEventListener('click', showDepartmentsTab);
@@ -4042,6 +4726,8 @@
             
             document.getElementById('closeSettingsModal').addEventListener('click', closeSettingsModal);
             document.getElementById('saveSettings').addEventListener('click', saveSettings);
+            
+            document.getElementById('closeAdminModal').addEventListener('click', closeAdminModal);
             
             document.getElementById('collaboratorBaseSalary').addEventListener('input', function() {
                 formatCurrencyInput(this);
@@ -4166,10 +4852,7 @@
             document.getElementById('closeImportModal').addEventListener('click', closeImportModal);
             document.getElementById('cancelImport').addEventListener('click', closeImportModal);
             document.getElementById('confirmImport').addEventListener('click', confirmImport);
-            document.getElementById('downloadTemplate').addEventListener('click', (e) => {
-                e.preventDefault();
-                downloadTemplate();
-            });
+            document.getElementById('downloadTemplate').addEventListener('click', downloadTemplate);
             
             const fileUploadArea = document.getElementById('fileUploadArea');
             const fileInput = document.getElementById('spreadsheetFile');
@@ -4239,6 +4922,12 @@
             document.getElementById('settingsModal').addEventListener('click', function(event) {
                 if (event.target === this) {
                     closeSettingsModal();
+                }
+            });
+            
+            document.getElementById('adminModal').addEventListener('click', function(event) {
+                if (event.target === this) {
+                    closeAdminModal();
                 }
             });
             
