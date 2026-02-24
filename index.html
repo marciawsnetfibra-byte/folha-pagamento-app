@@ -1368,10 +1368,14 @@
                             <ul class="list-disc list-inside mt-2 text-sm space-y-1">
                                 <li><span class="font-medium">Nome</span> - Nome completo do colaborador</li>
                                 <li><span class="font-medium">Departamento</span> - Nome do departamento</li>
-                                <li><span class="font-medium">Salário</span> - Valor em R$ (ex: R$ 2.500,00 ou 2500,00)</li>
+                                <li><span class="font-medium">Salário</span> - Valor em R$ (ex: R$4.460,70, R$ 2.500,00 ou 2500,00)</li>
                                 <li><span class="font-medium">Periculosidade</span> - "Sim" ou "Não"</li>
                                 <li><span class="font-medium">Horas Mensais</span> - 220, 180, 170, etc (opcional - padrão 220)</li>
                             </ul>
+                            <p class="mt-2 text-xs text-gray-600">
+                                <i class="fas fa-info-circle mr-1 text-blue-600"></i>
+                                O sistema reconhece valores nos formatos: R$4.460,70, R$ 2.500,00 ou 2500,00
+                            </p>
                             <p class="mt-2 text-xs text-gray-600">
                                 <i class="fas fa-download mr-1"></i> 
                                 <a href="#" id="downloadTemplate" class="text-blue-600 hover:underline">Baixar modelo de planilha</a>
@@ -2489,7 +2493,7 @@
         }
 
         // ============================================
-        // FUNÇÕES DE IMPORTAÇÃO DE PLANILHA
+        // FUNÇÕES DE IMPORTAÇÃO DE PLANILHA - CORRIGIDA
         // ============================================
         
         function openImportModal() {
@@ -2507,21 +2511,50 @@
             importData = null;
         }
         
+        /**
+         * Função melhorada para parse de valores monetários brasileiros
+         * Reconhece formatos como:
+         * - R$4.460,70
+         * - R$ 2.500,00
+         * - 1.802,86
+         * - 2500,00
+         * - 2500
+         */
         function parseCurrencyBR(value) {
-            if (typeof value !== 'string') {
-                value = String(value);
+            if (value === null || value === undefined) return 0;
+            
+            // Converte para string e remove espaços extras
+            let strValue = String(value).trim();
+            
+            // Se estiver vazio, retorna 0
+            if (strValue === '') return 0;
+            
+            // Remove o símbolo R$ (com ou sem espaço)
+            strValue = strValue.replace(/R\$\s*/g, '');
+            
+            // Verifica se tem formato brasileiro (com ponto como separador de milhar e vírgula como decimal)
+            // Exemplo: 4.460,70 ou 1.802,86
+            if (strValue.includes(',') && strValue.includes('.')) {
+                // Formato brasileiro com milhar e decimal
+                // Remove os pontos (separadores de milhar) e troca vírgula por ponto
+                strValue = strValue.replace(/\./g, '').replace(',', '.');
+            } 
+            // Formato apenas com vírgula (ex: 2500,00)
+            else if (strValue.includes(',')) {
+                strValue = strValue.replace(',', '.');
+            }
+            // Formato apenas com ponto (ex: 2500.00) - já está no formato internacional
+            else {
+                // Mantém como está, apenas converte para número
             }
             
-            let cleanValue = value.replace(/R\$\s*/g, '')
-                                 .replace(/\./g, '')
-                                 .replace(/,/g, '.')
-                                 .trim();
+            // Remove qualquer caractere que não seja dígito ou ponto
+            strValue = strValue.replace(/[^\d.-]/g, '');
             
-            if (cleanValue.startsWith('.')) {
-                cleanValue = '0' + cleanValue;
-            }
+            // Converte para número
+            const parsed = parseFloat(strValue);
             
-            const parsed = parseFloat(cleanValue);
+            // Retorna 0 se for NaN, senão retorna o valor
             return isNaN(parsed) ? 0 : parsed;
         }
         
@@ -2662,13 +2695,16 @@
             const tableHeader = document.getElementById('previewTableHeader');
             const tableBody = document.getElementById('previewTableBody');
             
+            // Calcula o total de salários corretamente
+            const totalSalarios = data.reduce((sum, item) => sum + item.baseSalaryValue, 0);
+            
             statsDiv.innerHTML = `
                 <div class="stat-card">
                     <div class="stat-number">${successCount}</div>
                     <div class="stat-label">Colaboradores Válidos</div>
                 </div>
                 <div class="stat-card">
-                    <div class="stat-number">R$ ${data.reduce((sum, item) => sum + item.baseSalaryValue, 0).toFixed(2).replace('.', ',')}</div>
+                    <div class="stat-number">R$ ${totalSalarios.toFixed(2).replace('.', ',').replace(/\B(?=(\d{3})+(?!\d))/g, '.')}</div>
                     <div class="stat-label">Total Salários</div>
                 </div>
                 <div class="stat-card">
