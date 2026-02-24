@@ -323,22 +323,9 @@
             font-size: 0.9rem;
         }
         
-        .input-wrapper {
-            position: relative;
-            display: flex;
-            align-items: center;
-        }
-        
-        .input-wrapper i {
-            position: absolute;
-            left: 12px;
-            color: #9ca3af;
-            font-size: 1.1rem;
-        }
-        
         .input-wrapper input {
             width: 100%;
-            padding: 12px 12px 12px 40px;
+            padding: 12px 16px;
             border: 2px solid #e5e7eb;
             border-radius: 10px;
             font-size: 1rem;
@@ -378,6 +365,25 @@
             font-size: 1.1rem;
         }
         
+        .forgot-password-link {
+            text-align: right;
+            margin-bottom: 1.5rem;
+        }
+        
+        .forgot-password-link button {
+            background: none;
+            border: none;
+            color: #667eea;
+            font-size: 0.9rem;
+            cursor: pointer;
+            text-decoration: underline;
+            transition: color 0.3s ease;
+        }
+        
+        .forgot-password-link button:hover {
+            color: #764ba2;
+        }
+        
         .login-footer {
             text-align: center;
             color: #6b7280;
@@ -387,6 +393,174 @@
             border-top: 1px solid #e5e7eb;
         }
         
+        .login-attempts {
+            font-size: 0.8rem;
+            color: #6b7280;
+            margin-top: 0.5rem;
+            text-align: center;
+        }
+        
+        /* MODAL DE RECUPERAÇÃO DE SENHA */
+        .recovery-modal {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            display: none;
+            align-items: center;
+            justify-content: center;
+            z-index: 11000;
+            backdrop-filter: blur(5px);
+        }
+        
+        .recovery-modal.active {
+            display: flex;
+        }
+        
+        .recovery-box {
+            background: white;
+            padding: 2.5rem;
+            border-radius: 20px;
+            width: 90%;
+            max-width: 400px;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.3);
+            position: relative;
+            z-index: 11001;
+            animation: fadeInUp 0.5s ease;
+        }
+        
+        .recovery-header {
+            text-align: center;
+            margin-bottom: 2rem;
+        }
+        
+        .recovery-header i {
+            font-size: 48px;
+            color: #667eea;
+            margin-bottom: 1rem;
+        }
+        
+        .recovery-header h2 {
+            color: #1800AD;
+            font-size: 1.5rem;
+            font-weight: 700;
+            margin-bottom: 0.5rem;
+        }
+        
+        .recovery-header p {
+            color: #6b7280;
+            font-size: 0.9rem;
+        }
+        
+        .recovery-message {
+            display: none;
+            background-color: #d1fae5;
+            border: 1px solid #a7f3d0;
+            color: #065f46;
+            padding: 12px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            font-size: 0.9rem;
+        }
+        
+        .recovery-message.show {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        
+        .recovery-error {
+            display: none;
+            background-color: #FEE2E2;
+            border: 1px solid #FECACA;
+            color: #DC2626;
+            padding: 12px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            font-size: 0.9rem;
+        }
+        
+        .recovery-error.show {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        
+        .back-to-login {
+            text-align: center;
+            margin-top: 1.5rem;
+        }
+        
+        .back-to-login button {
+            background: none;
+            border: none;
+            color: #667eea;
+            font-size: 0.9rem;
+            cursor: pointer;
+            text-decoration: underline;
+            transition: color 0.3s ease;
+        }
+        
+        .back-to-login button:hover {
+            color: #764ba2;
+        }
+        
+        /* MODAL DE TROCA DE SENHA */
+        .change-password-modal {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            display: none;
+            align-items: center;
+            justify-content: center;
+            z-index: 12000;
+            backdrop-filter: blur(5px);
+        }
+        
+        .change-password-modal.active {
+            display: flex;
+        }
+        
+        .change-password-box {
+            background: white;
+            padding: 2.5rem;
+            border-radius: 20px;
+            width: 90%;
+            max-width: 400px;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.3);
+            position: relative;
+            z-index: 12001;
+            animation: fadeInUp 0.5s ease;
+        }
+        
+        .security-code-info {
+            background-color: #e0f2fe;
+            border-left: 4px solid #0369a1;
+            padding: 12px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            font-size: 0.9rem;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        
+        .security-code {
+            font-family: monospace;
+            font-size: 1.2rem;
+            font-weight: bold;
+            color: #0369a1;
+            background: white;
+            padding: 4px 8px;
+            border-radius: 4px;
+            border: 1px solid #bae6fd;
+        }
+
         /* OUTROS MODAIS */
         .modal {
             display: none;
@@ -1005,13 +1179,6 @@
             height: 16px;
             margin: 0;
         }
-        
-        .login-attempts {
-            font-size: 0.8rem;
-            color: #6b7280;
-            margin-top: 0.5rem;
-            text-align: center;
-        }
 
         /* RESPONSIVIDADE */
         @media (max-width: 1024px) {
@@ -1072,7 +1239,7 @@
     </style>
 </head>
 <body>
-    <!-- MODAL DE LOGIN ÚNICO -->
+    <!-- MODAL DE LOGIN -->
     <div id="loginModal" class="login-modal">
         <div class="login-box">
             <div class="login-header">
@@ -1087,23 +1254,21 @@
             </div>
             
             <div class="input-group">
-                <label for="loginEmail">
-                    <i class="fas fa-envelope"></i> E-mail
-                </label>
+                <label for="loginEmail">E-mail</label>
                 <div class="input-wrapper">
-                    <i class="fas fa-envelope"></i>
-                    <input type="email" id="loginEmail" placeholder="seu@email.com" value="rh@wsnetfibra.com" autocomplete="off">
+                    <input type="email" id="loginEmail" placeholder="rh@wsnetfibra.com" value="rh@wsnetfibra.com" autocomplete="off">
                 </div>
             </div>
             
             <div class="input-group">
-                <label for="loginPassword">
-                    <i class="fas fa-lock"></i> Senha
-                </label>
+                <label for="loginPassword">Senha</label>
                 <div class="input-wrapper">
-                    <i class="fas fa-lock"></i>
                     <input type="password" id="loginPassword" placeholder="••••••••" autocomplete="off">
                 </div>
+            </div>
+            
+            <div class="forgot-password-link">
+                <button type="button" id="forgotPasswordBtn">Esqueci minha senha</button>
             </div>
             
             <button id="btnLogin" class="login-button">
@@ -1117,6 +1282,98 @@
             
             <div class="login-footer">
                 <p>© 2024 - Sistema de Folha de Pagamento<br>Acesso restrito</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- MODAL DE RECUPERAÇÃO DE SENHA -->
+    <div id="recoveryModal" class="recovery-modal">
+        <div class="recovery-box">
+            <div class="recovery-header">
+                <i class="fas fa-key"></i>
+                <h2>Recuperar Senha</h2>
+                <p>Digite seu e-mail para receber um código de recuperação</p>
+            </div>
+            
+            <div id="recoveryMessage" class="recovery-message">
+                <i class="fas fa-check-circle"></i>
+                <span id="recoveryMessageText">Código enviado com sucesso!</span>
+            </div>
+            
+            <div id="recoveryError" class="recovery-error">
+                <i class="fas fa-exclamation-circle"></i>
+                <span id="recoveryErrorText">Erro ao enviar código</span>
+            </div>
+            
+            <div class="input-group">
+                <label for="recoveryEmail">E-mail</label>
+                <div class="input-wrapper">
+                    <input type="email" id="recoveryEmail" placeholder="rh@wsnetfibra.com" value="rh@wsnetfibra.com">
+                </div>
+            </div>
+            
+            <button id="btnSendRecoveryCode" class="login-button">
+                <i class="fas fa-paper-plane"></i>
+                Enviar Código de Recuperação
+            </button>
+            
+            <div class="back-to-login">
+                <button type="button" id="backToLoginFromRecovery">
+                    <i class="fas fa-arrow-left"></i> Voltar para o login
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- MODAL DE TROCA DE SENHA -->
+    <div id="changePasswordModal" class="change-password-modal">
+        <div class="change-password-box">
+            <div class="recovery-header">
+                <i class="fas fa-lock"></i>
+                <h2>Alterar Senha</h2>
+                <p>Digite o código recebido e sua nova senha</p>
+            </div>
+            
+            <div id="changePasswordError" class="recovery-error">
+                <i class="fas fa-exclamation-circle"></i>
+                <span id="changePasswordErrorText">Erro ao alterar senha</span>
+            </div>
+            
+            <div class="security-code-info">
+                <i class="fas fa-info-circle"></i>
+                <span>Use o código: <span id="displaySecurityCode" class="security-code">123456</span></span>
+            </div>
+            
+            <div class="input-group">
+                <label for="securityCode">Código de Segurança</label>
+                <div class="input-wrapper">
+                    <input type="text" id="securityCode" placeholder="Digite o código recebido" maxlength="6">
+                </div>
+            </div>
+            
+            <div class="input-group">
+                <label for="newPassword">Nova Senha</label>
+                <div class="input-wrapper">
+                    <input type="password" id="newPassword" placeholder="••••••••">
+                </div>
+            </div>
+            
+            <div class="input-group">
+                <label for="confirmNewPassword">Confirmar Nova Senha</label>
+                <div class="input-wrapper">
+                    <input type="password" id="confirmNewPassword" placeholder="••••••••">
+                </div>
+            </div>
+            
+            <button id="btnChangePassword" class="login-button">
+                <i class="fas fa-save"></i>
+                Alterar Senha
+            </button>
+            
+            <div class="back-to-login">
+                <button type="button" id="backToLoginFromChange">
+                    <i class="fas fa-arrow-left"></i> Voltar para o login
+                </button>
             </div>
         </div>
     </div>
@@ -1150,6 +1407,10 @@
                 <button class="menu-button" id="menuSettings">
                     <i class="fas fa-cog"></i>
                     <span>Configurações</span>
+                </button>
+                <button class="menu-button" id="menuChangePassword">
+                    <i class="fas fa-key"></i>
+                    <span>Alterar Senha</span>
                 </button>
             </div>
             
@@ -1978,6 +2239,10 @@
         const MAX_ATTEMPTS = 5;
         let lockUntil = null;
         
+        // Variáveis para recuperação de senha
+        let recoveryCode = null;
+        let recoveryEmail = null;
+        
         let currentCalculationDetailId = null;
         let importData = null;
         let currentCollaboratorStatus = 'active';
@@ -2011,6 +2276,7 @@
         const DEPARTMENTS_STORAGE_KEY = 'folha_departamentos';
         const SETTINGS_STORAGE_KEY = 'folha_configuracoes';
         const AUTH_STORAGE_KEY = 'folha_auth_status';
+        const CREDENTIALS_STORAGE_KEY = 'folha_credentials';
         
         const DEFAULT_DEPARTMENTS = [];
 
@@ -2051,6 +2317,26 @@
             isAuthenticated = false;
         }
         
+        function saveCredentials(email, passwordHash) {
+            const credentials = {
+                email: email,
+                passwordHash: passwordHash
+            };
+            localStorage.setItem(CREDENTIALS_STORAGE_KEY, JSON.stringify(credentials));
+        }
+        
+        function loadCredentials() {
+            const saved = localStorage.getItem(CREDENTIALS_STORAGE_KEY);
+            if (saved) {
+                try {
+                    return JSON.parse(saved);
+                } catch (e) {
+                    console.error('Erro ao carregar credenciais:', e);
+                }
+            }
+            return null;
+        }
+        
         function handleLogin() {
             const emailInput = document.getElementById('loginEmail').value.trim();
             const passwordInput = document.getElementById('loginPassword').value;
@@ -2071,6 +2357,13 @@
                 loginAttempts = 0;
             }
             
+            // Carrega credenciais salvas ou usa as padrão
+            let validHash = VALID_CREDENTIALS.passwordHash;
+            const savedCredentials = loadCredentials();
+            if (savedCredentials && savedCredentials.email === emailInput) {
+                validHash = savedCredentials.passwordHash;
+            }
+            
             // Verifica credenciais
             if (emailInput !== VALID_CREDENTIALS.email) {
                 loginAttempts++;
@@ -2088,7 +2381,7 @@
             
             // Verifica a senha usando hash
             const inputHash = CryptoJS.SHA256(passwordInput).toString();
-            if (inputHash !== VALID_CREDENTIALS.passwordHash) {
+            if (inputHash !== validHash) {
                 loginAttempts++;
                 errorText.textContent = 'E-mail ou senha incorretos.';
                 errorElement.classList.add('show');
@@ -2126,6 +2419,131 @@
             document.getElementById('loginEmail').value = 'rh@wsnetfibra.com';
             document.getElementById('loginPassword').value = '';
             document.getElementById('loginError').classList.remove('show');
+            
+            // Limpa variáveis de recuperação
+            recoveryCode = null;
+            recoveryEmail = null;
+        }
+
+        // ============================================
+        // FUNÇÕES DE RECUPERAÇÃO DE SENHA
+        // ============================================
+        
+        function generateRecoveryCode() {
+            // Gera um código de 6 dígitos
+            return Math.floor(100000 + Math.random() * 900000).toString();
+        }
+        
+        function showRecoveryModal() {
+            document.getElementById('loginModal').style.display = 'none';
+            document.getElementById('recoveryModal').classList.add('active');
+            document.getElementById('recoveryEmail').value = 'rh@wsnetfibra.com';
+            document.getElementById('recoveryMessage').classList.remove('show');
+            document.getElementById('recoveryError').classList.remove('show');
+        }
+        
+        function hideRecoveryModal() {
+            document.getElementById('recoveryModal').classList.remove('active');
+            document.getElementById('loginModal').style.display = 'flex';
+        }
+        
+        function showChangePasswordModal() {
+            document.getElementById('recoveryModal').classList.remove('active');
+            document.getElementById('changePasswordModal').classList.add('active');
+            document.getElementById('securityCode').value = '';
+            document.getElementById('newPassword').value = '';
+            document.getElementById('confirmNewPassword').value = '';
+            document.getElementById('changePasswordError').classList.remove('show');
+            
+            // Mostra o código gerado
+            document.getElementById('displaySecurityCode').textContent = recoveryCode;
+        }
+        
+        function hideChangePasswordModal() {
+            document.getElementById('changePasswordModal').classList.remove('active');
+            document.getElementById('loginModal').style.display = 'flex';
+        }
+        
+        function handleSendRecoveryCode() {
+            const email = document.getElementById('recoveryEmail').value.trim();
+            const messageElement = document.getElementById('recoveryMessage');
+            const messageText = document.getElementById('recoveryMessageText');
+            const errorElement = document.getElementById('recoveryError');
+            const errorText = document.getElementById('recoveryErrorText');
+            
+            // Verifica se é o e-mail válido
+            if (email !== VALID_CREDENTIALS.email) {
+                errorText.textContent = 'E-mail não cadastrado no sistema.';
+                errorElement.classList.add('show');
+                messageElement.classList.remove('show');
+                return;
+            }
+            
+            // Gera código de recuperação
+            recoveryCode = generateRecoveryCode();
+            recoveryEmail = email;
+            
+            // Simula envio de código (em produção, isso enviaria um e-mail)
+            console.log('Código de recuperação:', recoveryCode);
+            
+            // Mostra mensagem de sucesso
+            messageText.textContent = `Código de recuperação enviado para ${email}! (Código: ${recoveryCode})`;
+            messageElement.classList.add('show');
+            errorElement.classList.remove('show');
+            
+            // Após 2 segundos, mostra a tela de alteração de senha
+            setTimeout(() => {
+                showChangePasswordModal();
+            }, 2000);
+        }
+        
+        function handleChangePassword() {
+            const inputCode = document.getElementById('securityCode').value.trim();
+            const newPassword = document.getElementById('newPassword').value;
+            const confirmPassword = document.getElementById('confirmNewPassword').value;
+            const errorElement = document.getElementById('changePasswordError');
+            const errorText = document.getElementById('changePasswordErrorText');
+            
+            // Validações
+            if (!inputCode || !newPassword || !confirmPassword) {
+                errorText.textContent = 'Por favor, preencha todos os campos.';
+                errorElement.classList.add('show');
+                return;
+            }
+            
+            if (inputCode !== recoveryCode) {
+                errorText.textContent = 'Código de segurança inválido.';
+                errorElement.classList.add('show');
+                return;
+            }
+            
+            if (newPassword.length < 6) {
+                errorText.textContent = 'A senha deve ter pelo menos 6 caracteres.';
+                errorElement.classList.add('show');
+                return;
+            }
+            
+            if (newPassword !== confirmPassword) {
+                errorText.textContent = 'As senhas não coincidem.';
+                errorElement.classList.add('show');
+                return;
+            }
+            
+            // Salva a nova senha (com hash)
+            const newPasswordHash = CryptoJS.SHA256(newPassword).toString();
+            saveCredentials(recoveryEmail, newPasswordHash);
+            
+            // Atualiza a variável global
+            VALID_CREDENTIALS.passwordHash = newPasswordHash;
+            
+            alert('Senha alterada com sucesso! Faça login com sua nova senha.');
+            
+            // Volta para o login
+            hideChangePasswordModal();
+            
+            // Limpa variáveis
+            recoveryCode = null;
+            recoveryEmail = null;
         }
 
         // ============================================
@@ -4667,11 +5085,29 @@
         }
 
         // ============================================
+        // FUNÇÃO PARA ALTERAR SENHA DENTRO DO APP
+        // ============================================
+        
+        function showChangePasswordFromMenu() {
+            // Gera um código de recuperação
+            recoveryCode = generateRecoveryCode();
+            recoveryEmail = VALID_CREDENTIALS.email;
+            
+            document.getElementById('displaySecurityCode').textContent = recoveryCode;
+            document.getElementById('securityCode').value = '';
+            document.getElementById('newPassword').value = '';
+            document.getElementById('confirmNewPassword').value = '';
+            document.getElementById('changePasswordError').classList.remove('show');
+            
+            document.getElementById('changePasswordModal').classList.add('active');
+        }
+
+        // ============================================
         // INICIALIZAÇÃO
         // ============================================
         
         document.addEventListener('DOMContentLoaded', () => {
-            console.log("🚀 Aplicação inicializada com login único");
+            console.log("🚀 Aplicação inicializada com login único e recuperação de senha");
             
             // Verifica se já existe uma sessão salva
             if (checkSavedAuth()) {
@@ -4765,6 +5201,7 @@
             document.getElementById('menuHistory').addEventListener('click', showHistory);
             document.getElementById('menuReports').addEventListener('click', showReports);
             document.getElementById('menuSettings').addEventListener('click', openSettingsModal);
+            document.getElementById('menuChangePassword').addEventListener('click', showChangePasswordFromMenu);
             
             document.getElementById('tabCollaborators').addEventListener('click', showCollaboratorsTab);
             document.getElementById('tabDepartments').addEventListener('click', showDepartmentsTab);
@@ -5006,8 +5443,22 @@
                 }
             });
             
-            // Eventos de login e logout
+            // Eventos de login e recuperação
             document.getElementById('btnLogin').addEventListener('click', handleLogin);
+            
+            document.getElementById('forgotPasswordBtn').addEventListener('click', showRecoveryModal);
+            
+            document.getElementById('btnSendRecoveryCode').addEventListener('click', handleSendRecoveryCode);
+            
+            document.getElementById('btnChangePassword').addEventListener('click', handleChangePassword);
+            
+            document.getElementById('backToLoginFromRecovery').addEventListener('click', () => {
+                hideRecoveryModal();
+            });
+            
+            document.getElementById('backToLoginFromChange').addEventListener('click', () => {
+                hideChangePasswordModal();
+            });
             
             // Permitir login com Enter
             document.getElementById('loginPassword').addEventListener('keypress', (e) => {
@@ -5021,6 +5472,35 @@
                 if (e.key === 'Enter') {
                     e.preventDefault();
                     document.getElementById('loginPassword').focus();
+                }
+            });
+            
+            // Enter nos modais de recuperação
+            document.getElementById('recoveryEmail').addEventListener('keypress', (e) => {
+                if (e.key === 'Enter') {
+                    e.preventDefault();
+                    handleSendRecoveryCode();
+                }
+            });
+            
+            document.getElementById('securityCode').addEventListener('keypress', (e) => {
+                if (e.key === 'Enter') {
+                    e.preventDefault();
+                    document.getElementById('newPassword').focus();
+                }
+            });
+            
+            document.getElementById('newPassword').addEventListener('keypress', (e) => {
+                if (e.key === 'Enter') {
+                    e.preventDefault();
+                    document.getElementById('confirmNewPassword').focus();
+                }
+            });
+            
+            document.getElementById('confirmNewPassword').addEventListener('keypress', (e) => {
+                if (e.key === 'Enter') {
+                    e.preventDefault();
+                    handleChangePassword();
                 }
             });
             
