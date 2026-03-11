@@ -1087,42 +1087,6 @@
             height: 16px;
             margin: 0;
         }
-        
-        .sync-status {
-            position: fixed;
-            bottom: 20px;
-            right: 20px;
-            background-color: #10B981;
-            color: white;
-            padding: 8px 16px;
-            border-radius: 20px;
-            font-size: 12px;
-            box-shadow: 0 2px 10px rgba(0,0,0,0.2);
-            z-index: 9999;
-            display: flex;
-            align-items: center;
-            gap: 8px;
-            animation: fadeIn 0.3s ease;
-        }
-        
-        .sync-status.offline {
-            background-color: #6B7280;
-        }
-        
-        .sync-status.error {
-            background-color: #EF4444;
-        }
-        
-        @keyframes fadeIn {
-            from {
-                opacity: 0;
-                transform: translateY(10px);
-            }
-            to {
-                opacity: 1;
-                transform: translateY(0);
-            }
-        }
 
         /* RESPONSIVIDADE */
         @media (max-width: 1024px) {
@@ -2121,11 +2085,55 @@
         </div>
     </div>
 
+    <!-- Status de Sincronização -->
+    <div id="syncStatus" class="sync-status" style="display: none;">
+        <i class="fas fa-cloud-upload-alt"></i>
+        <span>Sincronizado</span>
+    </div>
+
+    <style>
+        .sync-status {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            background-color: #10B981;
+            color: white;
+            padding: 8px 16px;
+            border-radius: 20px;
+            font-size: 12px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.2);
+            z-index: 9999;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            animation: fadeIn 0.3s ease;
+        }
+
+        .sync-status.offline {
+            background-color: #6B7280;
+        }
+
+        .sync-status.error {
+            background-color: #EF4444;
+        }
+
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+                transform: translateY(10px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+    </style>
+
     <script>
         // ============================================
-        // CONFIGURAÇÃO DO FIREBASE
+        // CONFIGURAÇÃO DO FIREBASE - VERSÃO CORRIGIDA
         // ============================================
-        
+
         const firebaseConfig = {
             apiKey: "AIzaSyBLgg6ICkkRMQimDU81tls9dxiNu-ubL1s",
             authDomain: "folha-pagamento-app.firebaseapp.com",
@@ -2135,10 +2143,10 @@
             appId: "1:482792411975:web:c884c56ce5a38313d33262"
         };
 
-        // Inicialização do Firebase
+        // Inicialização do Firebase (não mexa aqui, só cole)
         let db, auth;
         let firebaseAvailable = false;
-        
+
         try {
             if (typeof firebase !== 'undefined') {
                 if (!firebase.apps || firebase.apps.length === 0) {
@@ -2148,32 +2156,30 @@
                 
                 auth = firebase.auth();
                 
-                try {
-                    db = firebase.firestore();
-                    
-                    try {
-                        db.settings({
-                            ignoreUndefinedProperties: true,
-                            merge: true
-                        });
-                        console.log("✅ Firestore configurado");
-                    } catch (settingsError) {
-                        console.warn("⚠️ Erro ao configurar Firestore:", settingsError);
-                    }
-                    
-                    firebaseAvailable = true;
-                    
-                } catch (firestoreError) {
-                    console.error("❌ Erro ao inicializar Firestore:", firestoreError);
-                    firebaseAvailable = false;
-                    db = null;
-                }
+                // ATIVAR MODO OFFLINE - AGORA FUNCIONA SEM INTERNET!
+                firebase.firestore().enablePersistence()
+                    .then(() => {
+                        console.log("✅ Agora funciona offline!");
+                    })
+                    .catch((err) => {
+                        console.log("⚠️ Modo offline simples ativado");
+                    });
+                
+                db = firebase.firestore();
+                
+                db.settings({
+                    ignoreUndefinedProperties: true,
+                    merge: true
+                });
+                
+                firebaseAvailable = true;
+                console.log("✅ Firestore pronto!");
                 
             } else {
-                console.error("❌ Firebase SDK não carregado!");
+                console.error("❌ Firebase não carregado!");
             }
         } catch (error) {
-            console.error("❌ Erro crítico ao inicializar Firebase:", error);
+            console.error("❌ Erro:", error);
             firebaseAvailable = false;
         }
 
@@ -2347,6 +2353,11 @@
             document.getElementById('appContainer').style.display = 'flex';
             
             document.getElementById('loginPassword').value = '';
+            
+            // Carregar dados do Firebase
+            setTimeout(() => {
+                loadDataFromFirebase();
+            }, 500);
         }
         
         function handleLogout() {
@@ -2427,6 +2438,8 @@
             const syncStatus = document.getElementById('syncStatus');
             if (!syncStatus) return;
             
+            syncStatus.style.display = 'flex';
+            
             const icon = syncStatus.querySelector('i');
             const span = syncStatus.querySelector('span');
             
@@ -2434,22 +2447,34 @@
                 case 'syncing':
                     syncStatus.className = 'sync-status';
                     icon.className = 'fas fa-sync fa-spin';
-                    span.textContent = 'Sincronizando...';
+                    span.textContent = message || 'Sincronizando...';
                     break;
                 case 'success':
                     syncStatus.className = 'sync-status';
                     icon.className = 'fas fa-cloud-upload-alt';
                     span.textContent = message || 'Sincronizado';
+                    
+                    // Esconder após 3 segundos
+                    setTimeout(() => {
+                        syncStatus.style.display = 'none';
+                    }, 3000);
                     break;
                 case 'offline':
                     syncStatus.className = 'sync-status offline';
                     icon.className = 'fas fa-cloud';
                     span.textContent = message || 'Offline - dados locais';
+                    
+                    // Não esconder automaticamente para modo offline
                     break;
                 case 'error':
                     syncStatus.className = 'sync-status error';
                     icon.className = 'fas fa-exclamation-triangle';
                     span.textContent = message || 'Erro de sincronização';
+                    
+                    // Esconder após 5 segundos
+                    setTimeout(() => {
+                        syncStatus.style.display = 'none';
+                    }, 5000);
                     break;
             }
         }
@@ -2464,22 +2489,41 @@
                 const collaborators = getCollaborators();
                 const calculations = getSavedCalculations();
                 
-                // Salvar dados no Firestore (gratuito!)
-                if (departments.length > 0 || collaborators.length > 0 || calculations.length > 0) {
-                    await db.collection('dados_compartilhados').doc('principal').set({
-                        departments: departments,
-                        collaborators: collaborators,
-                        calculations: calculations,
-                        updatedAt: firebase.firestore.FieldValue.serverTimestamp(),
-                        updatedBy: VALID_CREDENTIALS.email
+                // Mostrar que está salvando
+                updateSyncStatus('syncing');
+                
+                // Salvar CADA COISA separadamente (como páginas individuais)
+                
+                // 1. Salvar departamentos
+                for (let dept of departments) {
+                    await db.collection('departamentos').doc(dept.id).set({
+                        ...dept,
+                        syncTimestamp: new Date().toISOString()
                     }, { merge: true });
-                    
-                    console.log("✅ Dados salvos no Firestore!");
                 }
                 
+                // 2. Salvar colaboradores
+                for (let collab of collaborators) {
+                    await db.collection('colaboradores').doc(collab.id).set({
+                        ...collab,
+                        syncTimestamp: new Date().toISOString()
+                    }, { merge: true });
+                }
+                
+                // 3. Salvar cálculos
+                for (let calc of calculations) {
+                    await db.collection('calculos').doc(calc.id).set({
+                        ...calc,
+                        syncTimestamp: new Date().toISOString()
+                    }, { merge: true });
+                }
+                
+                console.log("✅ Dados salvos com sucesso!");
+                updateSyncStatus('success', 'Salvo na nuvem ✓');
+                
             } catch (error) {
-                console.error('Erro ao salvar no Firebase:', error);
-                // Não mostramos erro para o usuário para não incomodar
+                console.error('Erro ao salvar:', error);
+                updateSyncStatus('error', 'Erro ao salvar');
             }
         }
         
@@ -2489,36 +2533,53 @@
             }
             
             try {
-                const docRef = await db.collection('dados_compartilhados').doc('principal').get();
+                updateSyncStatus('syncing');
                 
-                if (docRef.exists) {
-                    const data = docRef.data();
-                    
-                    if (data.departments && data.departments.length > 0) {
-                        localStorage.setItem(DEPARTMENTS_STORAGE_KEY, JSON.stringify(data.departments));
-                    }
-                    
-                    if (data.collaborators && data.collaborators.length > 0) {
-                        localStorage.setItem(COLLABORATORS_STORAGE_KEY, JSON.stringify(data.collaborators));
-                    }
-                    
-                    if (data.calculations && data.calculations.length > 0) {
-                        localStorage.setItem(CALCULATIONS_STORAGE_KEY, JSON.stringify(data.calculations));
-                    }
-                    
-                    console.log("✅ Dados carregados do Firestore!");
-                    
-                    // Atualizar interface
-                    updateDepartmentSelect();
-                    updateCollaboratorSelect();
-                    updateCollaboratorFilterSelect();
-                    renderCollaboratorsTable(currentCollaboratorStatus);
-                    renderDepartmentsTable();
+                // CARREGAR DEPARTAMENTOS
+                const deptsSnapshot = await db.collection('departamentos').get();
+                if (!deptsSnapshot.empty) {
+                    const departments = [];
+                    deptsSnapshot.forEach(doc => {
+                        departments.push(doc.data());
+                    });
+                    localStorage.setItem(DEPARTMENTS_STORAGE_KEY, JSON.stringify(departments));
+                    console.log(`📥 Carregados ${departments.length} departamentos`);
                 }
                 
+                // CARREGAR COLABORADORES
+                const collabsSnapshot = await db.collection('colaboradores').get();
+                if (!collabsSnapshot.empty) {
+                    const collaborators = [];
+                    collabsSnapshot.forEach(doc => {
+                        collaborators.push(doc.data());
+                    });
+                    localStorage.setItem(COLLABORATORS_STORAGE_KEY, JSON.stringify(collaborators));
+                    console.log(`📥 Carregados ${collaborators.length} colaboradores`);
+                }
+                
+                // CARREGAR CÁLCULOS
+                const calcsSnapshot = await db.collection('calculos').get();
+                if (!calcsSnapshot.empty) {
+                    const calculations = [];
+                    calcsSnapshot.forEach(doc => {
+                        calculations.push(doc.data());
+                    });
+                    localStorage.setItem(CALCULATIONS_STORAGE_KEY, JSON.stringify(calculations));
+                    console.log(`📥 Carregados ${calculations.length} cálculos`);
+                }
+                
+                updateSyncStatus('success', 'Dados carregados ✓');
+                
+                // Atualizar as telas
+                updateDepartmentSelect();
+                updateCollaboratorSelect();
+                updateCollaboratorFilterSelect();
+                renderCollaboratorsTable(currentCollaboratorStatus);
+                renderDepartmentsTable();
+                
             } catch (error) {
-                console.error('Erro ao carregar do Firebase:', error);
-                // Não mostramos erro para o usuário
+                console.error('Erro ao carregar:', error);
+                updateSyncStatus('error', 'Erro ao carregar');
             }
         }
 
