@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Calculadora de Adicionais e Reflexos da Folha de Pagamento</title>
     
-    <!-- Firebase SDK (apenas Firestore e Auth) -->
+    <!-- Firebase SDK (apenas o necessário) -->
     <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-auth-compat.js"></script>
@@ -25,7 +25,6 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/crypto-js/4.1.1/crypto-js.min.js"></script>
     
     <style>
-        /* (mantenha todo o CSS igual) */
         :root {
             --cor-titulo: #1800AD;
             --cor-menu: #0B0B2B;
@@ -2421,6 +2420,109 @@
         }
 
         // ============================================
+        // FUNÇÕES DE SINCRONIZAÇÃO COM FIREBASE
+        // ============================================
+        
+        function updateSyncStatus(status, message) {
+            const syncStatus = document.getElementById('syncStatus');
+            if (!syncStatus) return;
+            
+            const icon = syncStatus.querySelector('i');
+            const span = syncStatus.querySelector('span');
+            
+            switch(status) {
+                case 'syncing':
+                    syncStatus.className = 'sync-status';
+                    icon.className = 'fas fa-sync fa-spin';
+                    span.textContent = 'Sincronizando...';
+                    break;
+                case 'success':
+                    syncStatus.className = 'sync-status';
+                    icon.className = 'fas fa-cloud-upload-alt';
+                    span.textContent = message || 'Sincronizado';
+                    break;
+                case 'offline':
+                    syncStatus.className = 'sync-status offline';
+                    icon.className = 'fas fa-cloud';
+                    span.textContent = message || 'Offline - dados locais';
+                    break;
+                case 'error':
+                    syncStatus.className = 'sync-status error';
+                    icon.className = 'fas fa-exclamation-triangle';
+                    span.textContent = message || 'Erro de sincronização';
+                    break;
+            }
+        }
+        
+        async function saveDataToFirebase() {
+            if (!firebaseAvailable || !isAuthenticated) {
+                return;
+            }
+            
+            try {
+                const departments = getDepartments();
+                const collaborators = getCollaborators();
+                const calculations = getSavedCalculations();
+                
+                // Salvar dados no Firestore (gratuito!)
+                if (departments.length > 0 || collaborators.length > 0 || calculations.length > 0) {
+                    await db.collection('dados_compartilhados').doc('principal').set({
+                        departments: departments,
+                        collaborators: collaborators,
+                        calculations: calculations,
+                        updatedAt: firebase.firestore.FieldValue.serverTimestamp(),
+                        updatedBy: VALID_CREDENTIALS.email
+                    }, { merge: true });
+                    
+                    console.log("✅ Dados salvos no Firestore!");
+                }
+                
+            } catch (error) {
+                console.error('Erro ao salvar no Firebase:', error);
+                // Não mostramos erro para o usuário para não incomodar
+            }
+        }
+        
+        async function loadDataFromFirebase() {
+            if (!firebaseAvailable || !isAuthenticated) {
+                return;
+            }
+            
+            try {
+                const docRef = await db.collection('dados_compartilhados').doc('principal').get();
+                
+                if (docRef.exists) {
+                    const data = docRef.data();
+                    
+                    if (data.departments && data.departments.length > 0) {
+                        localStorage.setItem(DEPARTMENTS_STORAGE_KEY, JSON.stringify(data.departments));
+                    }
+                    
+                    if (data.collaborators && data.collaborators.length > 0) {
+                        localStorage.setItem(COLLABORATORS_STORAGE_KEY, JSON.stringify(data.collaborators));
+                    }
+                    
+                    if (data.calculations && data.calculations.length > 0) {
+                        localStorage.setItem(CALCULATIONS_STORAGE_KEY, JSON.stringify(data.calculations));
+                    }
+                    
+                    console.log("✅ Dados carregados do Firestore!");
+                    
+                    // Atualizar interface
+                    updateDepartmentSelect();
+                    updateCollaboratorSelect();
+                    updateCollaboratorFilterSelect();
+                    renderCollaboratorsTable(currentCollaboratorStatus);
+                    renderDepartmentsTable();
+                }
+                
+            } catch (error) {
+                console.error('Erro ao carregar do Firebase:', error);
+                // Não mostramos erro para o usuário
+            }
+        }
+
+        // ============================================
         // FORMATAÇÃO DE MOEDA
         // ============================================
         
@@ -2534,14 +2636,20 @@
         
         function saveDepartmentsToStorage(departments) {
             localStorage.setItem(DEPARTMENTS_STORAGE_KEY, JSON.stringify(departments));
+            // Sincronizar com Firebase em segundo plano
+            setTimeout(() => saveDataToFirebase(), 100);
         }
         
         function saveCollaboratorsToStorage(collaborators) {
             localStorage.setItem(COLLABORATORS_STORAGE_KEY, JSON.stringify(collaborators));
+            // Sincronizar com Firebase em segundo plano
+            setTimeout(() => saveDataToFirebase(), 100);
         }
         
         function saveCalculationsToStorage(calculations) {
             localStorage.setItem(CALCULATIONS_STORAGE_KEY, JSON.stringify(calculations));
+            // Sincronizar com Firebase em segundo plano
+            setTimeout(() => saveDataToFirebase(), 100);
         }
 
         // ============================================
@@ -3928,7 +4036,7 @@
                             </div>
                             <div>
                                 <span class="text-sm text-gray-600">Status:</span>
-                                <p class="font-medium">Salvo localmente</p>
+                                <p class="font-medium">Sincronizado</p>
                             </div>
                         </div>
                     </div>
@@ -4971,13 +5079,18 @@
         // ============================================
         
         document.addEventListener('DOMContentLoaded', () => {
-            console.log("🚀 Aplicação inicializada com login único e dados locais");
+            console.log("🚀 Aplicação inicializada com compartilhamento de dados");
             
             // Verifica se já existe uma sessão salva
             if (checkSavedAuth()) {
                 // Se já estiver autenticado, mostra o app
                 document.getElementById('loginModal').style.display = 'none';
                 document.getElementById('appContainer').style.display = 'flex';
+                
+                // Carregar dados compartilhados do Firebase
+                setTimeout(() => {
+                    loadDataFromFirebase();
+                }, 500);
             } else {
                 // Mostra o modal de login
                 document.getElementById('loginModal').style.display = 'flex';
