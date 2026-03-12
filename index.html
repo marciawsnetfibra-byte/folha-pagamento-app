@@ -1,3 +1,7 @@
+Você é um desenvolvedor de aplicativos experiente e está auxiliando uma pessoa da área de Recursos Humanos que não possui conhecimento técnico em desenvolvimento de software. Juntos, vocês estão criando um aplicativo com o intuito de facilitar os cálculos que são utilizados na folha de pagamento. Para facilitar o entendimento e garantir a funcionalidade, você sempre fornecerá O CÓDIGO COMPLETO após qualquer alteração para que a pessoa possa testar diretamente. 
+
+chat, quero que veja se está tudo OK com o código, se está tudo sincronizado corretamente, pois quando corpartilho o link com alguém as informações não vão conforme o que eu já adicionei no aplicativo. preciso que tudo esteja correto no firebase, para eu poder compartilhar o app com os demais do meu setor e os dados estejam sempre sincronizados
+
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
@@ -5,7 +9,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Calculadora de Adicionais e Reflexos da Folha de Pagamento</title>
     
-    <!-- Firebase SDK -->
+    <!-- Firebase SDK (apenas o necessário) -->
     <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-auth-compat.js"></script>
@@ -1087,6 +1091,42 @@
             height: 16px;
             margin: 0;
         }
+        
+        .sync-status {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            background-color: #10B981;
+            color: white;
+            padding: 8px 16px;
+            border-radius: 20px;
+            font-size: 12px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.2);
+            z-index: 9999;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            animation: fadeIn 0.3s ease;
+        }
+        
+        .sync-status.offline {
+            background-color: #6B7280;
+        }
+        
+        .sync-status.error {
+            background-color: #EF4444;
+        }
+        
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+                transform: translateY(10px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
 
         /* RESPONSIVIDADE */
         @media (max-width: 1024px) {
@@ -2085,55 +2125,11 @@
         </div>
     </div>
 
-    <!-- Status de Sincronização -->
-    <div id="syncStatus" class="sync-status" style="display: none;">
-        <i class="fas fa-cloud-upload-alt"></i>
-        <span>Sincronizado</span>
-    </div>
-
-    <style>
-        .sync-status {
-            position: fixed;
-            bottom: 20px;
-            right: 20px;
-            background-color: #10B981;
-            color: white;
-            padding: 8px 16px;
-            border-radius: 20px;
-            font-size: 12px;
-            box-shadow: 0 2px 10px rgba(0,0,0,0.2);
-            z-index: 9999;
-            display: flex;
-            align-items: center;
-            gap: 8px;
-            animation: fadeIn 0.3s ease;
-        }
-
-        .sync-status.offline {
-            background-color: #6B7280;
-        }
-
-        .sync-status.error {
-            background-color: #EF4444;
-        }
-
-        @keyframes fadeIn {
-            from {
-                opacity: 0;
-                transform: translateY(10px);
-            }
-            to {
-                opacity: 1;
-                transform: translateY(0);
-            }
-        }
-    </style>
-
     <script>
         // ============================================
         // CONFIGURAÇÃO DO FIREBASE
         // ============================================
-
+        
         const firebaseConfig = {
             apiKey: "AIzaSyBLgg6ICkkRMQimDU81tls9dxiNu-ubL1s",
             authDomain: "folha-pagamento-app.firebaseapp.com",
@@ -2146,31 +2142,42 @@
         // Inicialização do Firebase
         let db, auth;
         let firebaseAvailable = false;
-
+        
         try {
             if (typeof firebase !== 'undefined') {
                 if (!firebase.apps || firebase.apps.length === 0) {
                     firebase.initializeApp(firebaseConfig);
-                    console.log("✅ Firebase inicializado!");
+                    console.log("✅ Firebase inicializado com sucesso!");
                 }
                 
                 auth = firebase.auth();
-                db = firebase.firestore();
                 
-                // Configurar Firestore
-                db.settings({
-                    ignoreUndefinedProperties: true,
-                    merge: true
-                });
-                
-                firebaseAvailable = true;
-                console.log("✅ Firestore pronto!");
+                try {
+                    db = firebase.firestore();
+                    
+                    try {
+                        db.settings({
+                            ignoreUndefinedProperties: true,
+                            merge: true
+                        });
+                        console.log("✅ Firestore configurado");
+                    } catch (settingsError) {
+                        console.warn("⚠️ Erro ao configurar Firestore:", settingsError);
+                    }
+                    
+                    firebaseAvailable = true;
+                    
+                } catch (firestoreError) {
+                    console.error("❌ Erro ao inicializar Firestore:", firestoreError);
+                    firebaseAvailable = false;
+                    db = null;
+                }
                 
             } else {
                 console.error("❌ Firebase SDK não carregado!");
             }
         } catch (error) {
-            console.error("❌ Erro ao inicializar Firebase:", error);
+            console.error("❌ Erro crítico ao inicializar Firebase:", error);
             firebaseAvailable = false;
         }
 
@@ -2214,12 +2221,12 @@
         };
 
         // ============================================
-        // CHAVES DE ARMAZENAMENTO (agora só como cache)
+        // CHAVES DE ARMAZENAMENTO
         // ============================================
         
-        const COLLABORATORS_CACHE_KEY = 'folha_colaboradores_cache';
-        const CALCULATIONS_CACHE_KEY = 'folha_calculos_cache';
-        const DEPARTMENTS_CACHE_KEY = 'folha_departamentos_cache';
+        const COLLABORATORS_STORAGE_KEY = 'folha_colaboradores_cadastrados';
+        const CALCULATIONS_STORAGE_KEY = 'folha_calculos_salvos';
+        const DEPARTMENTS_STORAGE_KEY = 'folha_departamentos';
         const SETTINGS_STORAGE_KEY = 'folha_configuracoes';
         const AUTH_STORAGE_KEY = 'folha_auth_status';
         const CREDENTIALS_STORAGE_KEY = 'folha_credentials';
@@ -2344,11 +2351,6 @@
             document.getElementById('appContainer').style.display = 'flex';
             
             document.getElementById('loginPassword').value = '';
-            
-            // Carregar dados do Firebase
-            setTimeout(() => {
-                carregarDadosDoFirebase();
-            }, 500);
         }
         
         function handleLogout() {
@@ -2425,165 +2427,259 @@
         // FUNÇÕES DE SINCRONIZAÇÃO COM FIREBASE
         // ============================================
         
-        function mostrarStatus(mensagem, tipo = 'success') {
+        function updateSyncStatus(status, message) {
             const syncStatus = document.getElementById('syncStatus');
             if (!syncStatus) return;
-            
-            syncStatus.style.display = 'flex';
-            syncStatus.className = `sync-status ${tipo}`;
             
             const icon = syncStatus.querySelector('i');
             const span = syncStatus.querySelector('span');
             
-            if (tipo === 'syncing') {
-                icon.className = 'fas fa-sync fa-spin';
-            } else if (tipo === 'error') {
-                icon.className = 'fas fa-exclamation-triangle';
-            } else {
-                icon.className = 'fas fa-cloud-upload-alt';
-            }
-            
-            span.textContent = mensagem;
-            
-            if (tipo !== 'syncing') {
-                setTimeout(() => {
-                    syncStatus.style.display = 'none';
-                }, 3000);
+            switch(status) {
+                case 'syncing':
+                    syncStatus.className = 'sync-status';
+                    icon.className = 'fas fa-sync fa-spin';
+                    span.textContent = 'Sincronizando...';
+                    break;
+                case 'success':
+                    syncStatus.className = 'sync-status';
+                    icon.className = 'fas fa-cloud-upload-alt';
+                    span.textContent = message || 'Sincronizado';
+                    break;
+                case 'offline':
+                    syncStatus.className = 'sync-status offline';
+                    icon.className = 'fas fa-cloud';
+                    span.textContent = message || 'Offline - dados locais';
+                    break;
+                case 'error':
+                    syncStatus.className = 'sync-status error';
+                    icon.className = 'fas fa-exclamation-triangle';
+                    span.textContent = message || 'Erro de sincronização';
+                    break;
             }
         }
-
-        // FUNÇÃO PRINCIPAL PARA CARREGAR DADOS DO FIREBASE
-        async function carregarDadosDoFirebase() {
+        
+        async function saveDataToFirebase() {
             if (!firebaseAvailable || !isAuthenticated) {
-                console.log("Firebase não disponível");
                 return;
             }
             
             try {
-                mostrarStatus('Carregando dados da nuvem...', 'syncing');
+                const departments = getDepartments();
+                const collaborators = getCollaborators();
+                const calculations = getSavedCalculations();
                 
-                let colaboradores = [];
-                let departamentos = [];
-                let calculos = [];
-                
-                // CARREGAR DEPARTAMENTOS
-                try {
-                    const deptsSnapshot = await db.collection('departamentos').get();
-                    if (!deptsSnapshot.empty) {
-                        departamentos = [];
-                        deptsSnapshot.forEach(doc => {
-                            departamentos.push(doc.data());
-                        });
-                        // Salvar no cache local
-                        localStorage.setItem(DEPARTMENTS_CACHE_KEY, JSON.stringify(departamentos));
-                        console.log(`📥 Carregados ${departamentos.length} departamentos`);
-                    }
-                } catch (error) {
-                    console.warn('Erro ao carregar departamentos:', error);
+                // Salvar dados no Firestore (gratuito!)
+                if (departments.length > 0 || collaborators.length > 0 || calculations.length > 0) {
+                    await db.collection('dados_compartilhados').doc('principal').set({
+                        departments: departments,
+                        collaborators: collaborators,
+                        calculations: calculations,
+                        updatedAt: firebase.firestore.FieldValue.serverTimestamp(),
+                        updatedBy: VALID_CREDENTIALS.email
+                    }, { merge: true });
+                    
+                    console.log("✅ Dados salvos no Firestore!");
                 }
-                
-                // CARREGAR COLABORADORES
-                try {
-                    const collabsSnapshot = await db.collection('colaboradores').get();
-                    if (!collabsSnapshot.empty) {
-                        colaboradores = [];
-                        collabsSnapshot.forEach(doc => {
-                            colaboradores.push(doc.data());
-                        });
-                        localStorage.setItem(COLLABORATORS_CACHE_KEY, JSON.stringify(colaboradores));
-                        console.log(`📥 Carregados ${colaboradores.length} colaboradores`);
-                    }
-                } catch (error) {
-                    console.warn('Erro ao carregar colaboradores:', error);
-                }
-                
-                // CARREGAR CÁLCULOS
-                try {
-                    const calcsSnapshot = await db.collection('calculos').get();
-                    if (!calcsSnapshot.empty) {
-                        calculos = [];
-                        calcsSnapshot.forEach(doc => {
-                            calculos.push(doc.data());
-                        });
-                        localStorage.setItem(CALCULATIONS_CACHE_KEY, JSON.stringify(calculos));
-                        console.log(`📥 Carregados ${calculos.length} cálculos`);
-                    }
-                } catch (error) {
-                    console.warn('Erro ao carregar cálculos:', error);
-                }
-                
-                mostrarStatus('Dados carregados da nuvem! ✓');
-                
-                // Atualizar as telas
-                atualizarTodasTelas();
                 
             } catch (error) {
-                console.error('Erro ao carregar do Firebase:', error);
-                mostrarStatus('Erro ao carregar dados', 'error');
+                console.error('Erro ao salvar no Firebase:', error);
+                // Não mostramos erro para o usuário para não incomodar
             }
         }
-
-        // FUNÇÃO PRINCIPAL PARA SALVAR DADOS NO FIREBASE
-        async function salvarNoFirebase(tipo, dados) {
+        
+        async function loadDataFromFirebase() {
             if (!firebaseAvailable || !isAuthenticated) {
-                console.log("Firebase não disponível");
-                return false;
+                return;
             }
             
             try {
-                mostrarStatus('Salvando na nuvem...', 'syncing');
+                const docRef = await db.collection('dados_compartilhados').doc('principal').get();
                 
-                if (tipo === 'departamento') {
-                    await db.collection('departamentos').doc(dados.id).set(dados, { merge: true });
-                } else if (tipo === 'colaborador') {
-                    await db.collection('colaboradores').doc(dados.id).set(dados, { merge: true });
-                } else if (tipo === 'calculo') {
-                    await db.collection('calculos').doc(dados.id).set(dados, { merge: true });
-                } else if (tipo === 'delete_colaborador') {
-                    await db.collection('colaboradores').doc(dados).delete();
-                } else if (tipo === 'delete_departamento') {
-                    await db.collection('departamentos').doc(dados).delete();
-                } else if (tipo === 'delete_calculo') {
-                    await db.collection('calculos').doc(dados).delete();
+                if (docRef.exists) {
+                    const data = docRef.data();
+                    
+                    if (data.departments && data.departments.length > 0) {
+                        localStorage.setItem(DEPARTMENTS_STORAGE_KEY, JSON.stringify(data.departments));
+                    }
+                    
+                    if (data.collaborators && data.collaborators.length > 0) {
+                        localStorage.setItem(COLLABORATORS_STORAGE_KEY, JSON.stringify(data.collaborators));
+                    }
+                    
+                    if (data.calculations && data.calculations.length > 0) {
+                        localStorage.setItem(CALCULATIONS_STORAGE_KEY, JSON.stringify(data.calculations));
+                    }
+                    
+                    console.log("✅ Dados carregados do Firestore!");
+                    
+                    // Atualizar interface
+                    updateDepartmentSelect();
+                    updateCollaboratorSelect();
+                    updateCollaboratorFilterSelect();
+                    renderCollaboratorsTable(currentCollaboratorStatus);
+                    renderDepartmentsTable();
                 }
                 
-                mostrarStatus('Salvo na nuvem! ✓');
-                return true;
-                
             } catch (error) {
-                console.error(`Erro ao salvar ${tipo}:`, error);
-                mostrarStatus('Erro ao salvar', 'error');
-                return false;
+                console.error('Erro ao carregar do Firebase:', error);
+                // Não mostramos erro para o usuário
             }
         }
 
         // ============================================
-        // FUNÇÕES DE ARMAZENAMENTO (com prioridade no Firebase)
+        // FORMATAÇÃO DE MOEDA
+        // ============================================
+        
+        const R$ = new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' });
+
+        // ============================================
+        // FUNÇÕES DE CONFIGURAÇÕES
+        // ============================================
+        
+        function loadSettings() {
+            const savedSettings = localStorage.getItem(SETTINGS_STORAGE_KEY);
+            
+            if (savedSettings) {
+                try {
+                    const settings = JSON.parse(savedSettings);
+                    heNormalPorcentagem = settings.heNormalPorcentagem || 50;
+                    heSobreavisoPorcentagem = settings.heSobreavisoPorcentagem || 50;
+                    adicionalNoturnoPorcentagem = settings.adicionalNoturnoPorcentagem || 20;
+                } catch (e) {
+                    console.error("Erro ao carregar configurações:", e);
+                }
+            }
+            
+            const heNormalInput = document.getElementById('heNormalPorcentagem');
+            const heSobreavisoInput = document.getElementById('heSobreavisoPorcentagem');
+            const adicionalNoturnoInput = document.getElementById('adicionalNoturnoPorcentagem');
+            
+            if (heNormalInput) heNormalInput.value = heNormalPorcentagem;
+            if (heSobreavisoInput) heSobreavisoInput.value = heSobreavisoPorcentagem;
+            if (adicionalNoturnoInput) adicionalNoturnoInput.value = adicionalNoturnoPorcentagem;
+            
+            updatePercentageDisplays();
+        }
+        
+        function saveSettings() {
+            const heNormalInput = document.getElementById('heNormalPorcentagem');
+            const heSobreavisoInput = document.getElementById('heSobreavisoPorcentagem');
+            const adicionalNoturnoInput = document.getElementById('adicionalNoturnoPorcentagem');
+            
+            heNormalPorcentagem = parseInt(heNormalInput.value) || 50;
+            heSobreavisoPorcentagem = parseInt(heSobreavisoInput.value) || 50;
+            adicionalNoturnoPorcentagem = parseInt(adicionalNoturnoInput.value) || 20;
+            
+            const settings = {
+                heNormalPorcentagem,
+                heSobreavisoPorcentagem,
+                adicionalNoturnoPorcentagem,
+                updatedAt: new Date().toISOString()
+            };
+            
+            localStorage.setItem(SETTINGS_STORAGE_KEY, JSON.stringify(settings));
+            
+            updatePercentageDisplays();
+            calcular();
+            
+            alert('Configurações salvas com sucesso!');
+            closeSettingsModal();
+        }
+        
+        function updatePercentageDisplays() {
+            const displays = [
+                'heNormalPorcentagemDisplay',
+                'heSobreavisoPorcentagemDisplay',
+                'adicionalNoturnoPorcentagemDisplay',
+                'heNormalPorcentagemReflexoDisplay',
+                'heSobreavisoPorcentagemReflexoDisplay',
+                'adicionalNoturnoPorcentagemReflexoDisplay',
+                'heNormalPorcentagemBaseDisplay'
+            ];
+            
+            displays.forEach(id => {
+                const element = document.getElementById(id);
+                if (element) {
+                    if (id.includes('Normal')) {
+                        element.textContent = heNormalPorcentagem;
+                    } else if (id.includes('Sobreaviso')) {
+                        element.textContent = heSobreavisoPorcentagem;
+                    } else if (id.includes('Noturno')) {
+                        element.textContent = adicionalNoturnoPorcentagem;
+                    }
+                }
+            });
+        }
+        
+        function openSettingsModal() {
+            document.getElementById('settingsModal').classList.add('active');
+        }
+        
+        function closeSettingsModal() {
+            document.getElementById('settingsModal').classList.remove('active');
+        }
+
+        // ============================================
+        // FUNÇÕES DE ARMAZENAMENTO
         // ============================================
         
         function getDepartments() {
-            // Tenta pegar do cache primeiro
-            const cached = localStorage.getItem(DEPARTMENTS_CACHE_KEY);
-            return cached ? JSON.parse(cached) : [];
+            const savedData = localStorage.getItem(DEPARTMENTS_STORAGE_KEY);
+            return savedData ? JSON.parse(savedData) : [];
         }
         
         function getCollaborators() {
-            const cached = localStorage.getItem(COLLABORATORS_CACHE_KEY);
-            return cached ? JSON.parse(cached) : [];
+            const savedData = localStorage.getItem(COLLABORATORS_STORAGE_KEY);
+            return savedData ? JSON.parse(savedData) : [];
         }
         
         function getSavedCalculations() {
-            const cached = localStorage.getItem(CALCULATIONS_CACHE_KEY);
-            return cached ? JSON.parse(cached) : [];
+            const savedData = localStorage.getItem(CALCULATIONS_STORAGE_KEY);
+            return savedData ? JSON.parse(savedData) : [];
         }
         
-        function atualizarTodasTelas() {
-            updateDepartmentSelect();
-            updateCollaboratorSelect();
-            updateCollaboratorFilterSelect();
-            renderCollaboratorsTable(currentCollaboratorStatus);
-            renderDepartmentsTable();
-            renderHistoryTable();
+        function saveDepartmentsToStorage(departments) {
+            localStorage.setItem(DEPARTMENTS_STORAGE_KEY, JSON.stringify(departments));
+            // Sincronizar com Firebase em segundo plano
+            setTimeout(() => saveDataToFirebase(), 100);
+        }
+        
+        function saveCollaboratorsToStorage(collaborators) {
+            localStorage.setItem(COLLABORATORS_STORAGE_KEY, JSON.stringify(collaborators));
+            // Sincronizar com Firebase em segundo plano
+            setTimeout(() => saveDataToFirebase(), 100);
+        }
+        
+        function saveCalculationsToStorage(calculations) {
+            localStorage.setItem(CALCULATIONS_STORAGE_KEY, JSON.stringify(calculations));
+            // Sincronizar com Firebase em segundo plano
+            setTimeout(() => saveDataToFirebase(), 100);
+        }
+
+        // ============================================
+        // FUNÇÕES DE NOTIFICAÇÃO DE DUPLICIDADE
+        // ============================================
+        
+        function showDuplicateNotification(message) {
+            const notification = document.getElementById('duplicateNotification');
+            const messageElement = document.getElementById('duplicateMessage');
+            
+            messageElement.textContent = message || 'Este cálculo já foi salvo anteriormente para este colaborador no mesmo mês.';
+            notification.style.display = 'flex';
+            
+            setTimeout(() => {
+                notification.style.display = 'none';
+            }, 5000);
+        }
+        
+        function checkDuplicateCalculation(collaboratorId, mesReferencia, currentCalculationId = null) {
+            const calculations = getSavedCalculations();
+            
+            return calculations.some(calc => 
+                calc.collaboratorId === collaboratorId && 
+                calc.mesReferencia === mesReferencia &&
+                (currentCalculationId === null || calc.id !== currentCalculationId)
+            );
         }
 
         // ============================================
@@ -2605,20 +2701,30 @@
             importData = null;
         }
         
+        /**
+         * Função melhorada para parse de valores monetários brasileiros
+         */
         function parseCurrencyBR(value) {
             if (value === null || value === undefined) return 0;
             
             let strValue = String(value).trim();
             if (strValue === '') return 0;
             
+            // Remove R$ (com ou sem espaço)
             strValue = strValue.replace(/R\$\s*/g, '');
             
+            // Formato brasileiro: 4.460,70 ou 1.802,86
             if (strValue.includes(',') && strValue.includes('.')) {
+                // Remove pontos (separadores de milhar) e troca vírgula por ponto
                 strValue = strValue.replace(/\./g, '').replace(',', '.');
-            } else if (strValue.includes(',')) {
+            } 
+            // Apenas vírgula: 2500,00
+            else if (strValue.includes(',')) {
                 strValue = strValue.replace(',', '.');
             }
+            // Apenas ponto: 2500.00 - já está ok
             
+            // Remove caracteres não numéricos exceto ponto e negativo
             strValue = strValue.replace(/[^\d.-]/g, '');
             
             const parsed = parseFloat(strValue);
@@ -2718,6 +2824,7 @@
                     }
                 }
                 
+                // IMPORTANTE: Gerar ID como string para evitar problemas de comparação
                 const collaboratorId = 'col_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9);
                 
                 importedData.push({
@@ -2842,50 +2949,47 @@
             previewDiv.style.display = 'block';
         }
         
-        async function confirmImport() {
+        function confirmImport() {
             if (!importData || importData.length === 0) {
                 alert('Nenhum dado para importar.');
                 return;
             }
             
-            let colaboradores = getCollaborators();
-            let departamentos = getDepartments();
+            const collaborators = getCollaborators();
+            const departments = getDepartments();
             let newCollaborators = 0;
             let updatedCollaborators = 0;
             
-            // Criar departamentos novos
             const departmentNames = [...new Set(importData.map(item => item.department))];
             
-            for (const deptName of departmentNames) {
+            departmentNames.forEach(deptName => {
                 if (deptName && deptName !== 'Não especificado') {
-                    const existingDept = departamentos.find(d => 
+                    const existingDept = departments.find(d => 
                         d.name.toLowerCase() === deptName.toLowerCase()
                     );
                     
                     if (!existingDept) {
-                        const novoDept = {
+                        departments.push({
                             id: 'dept_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9),
                             name: deptName,
                             active: true,
                             createdAt: new Date().toISOString(),
                             updatedAt: new Date().toISOString()
-                        };
-                        
-                        departamentos.push(novoDept);
-                        await salvarNoFirebase('departamento', novoDept);
+                        });
                     }
                 }
-            }
+            });
             
-            localStorage.setItem(DEPARTMENTS_CACHE_KEY, JSON.stringify(departamentos));
+            saveDepartmentsToStorage(departments);
             
-            // Importar colaboradores
-            for (const item of importData) {
-                const existingCollaborator = colaboradores.find(c => 
+            importData.forEach(item => {
+                // Verificar se já existe pelo nome (case insensitive)
+                const existingCollaborator = collaborators.find(c => 
                     c.name.toLowerCase().trim() === item.name.toLowerCase().trim()
                 );
                 
                 if (existingCollaborator) {
+                    // Atualizar existente mantendo o ID original
                     existingCollaborator.department = item.department;
                     existingCollaborator.baseSalary = item.baseSalary;
                     existingCollaborator.baseSalaryValue = item.baseSalaryValue;
@@ -2893,17 +2997,15 @@
                     existingCollaborator.periculosidade = item.periculosidade;
                     existingCollaborator.updatedAt = new Date().toISOString();
                     existingCollaborator.active = true;
-                    
-                    await salvarNoFirebase('colaborador', existingCollaborator);
                     updatedCollaborators++;
                 } else {
-                    colaboradores.push(item);
-                    await salvarNoFirebase('colaborador', item);
+                    // Adicionar novo com ID gerado na importação
+                    collaborators.push(item);
                     newCollaborators++;
                 }
-            }
+            });
             
-            localStorage.setItem(COLLABORATORS_CACHE_KEY, JSON.stringify(colaboradores));
+            saveCollaboratorsToStorage(collaborators);
             
             updateDepartmentSelect();
             updateCollaboratorSelect();
@@ -3324,7 +3426,7 @@
         // SISTEMA DE CADASTRO DE COLABORADORES
         // ============================================
         
-        async function saveCollaborator(event) {
+        function saveCollaborator(event) {
             event.preventDefault();
             
             const id = document.getElementById('collaboratorEditId').value;
@@ -3359,19 +3461,19 @@
                 return;
             }
             
-            let colaboradores = getCollaborators();
-            let novoColaborador;
+            const collaborators = getCollaborators();
+            let newCollaborator;
             
             if (id) {
-                const existingIndex = colaboradores.findIndex(c => c.id === id);
+                const existingIndex = collaborators.findIndex(c => c.id === id);
                 
                 if (existingIndex === -1) {
                     alert('Colaborador não encontrado!');
                     return;
                 }
                 
-                novoColaborador = {
-                    ...colaboradores[existingIndex],
+                newCollaborator = {
+                    ...collaborators[existingIndex],
                     name: name,
                     department: department,
                     baseSalary: baseSalary,
@@ -3384,11 +3486,11 @@
                     updatedAt: new Date().toISOString()
                 };
                 
-                colaboradores[existingIndex] = novoColaborador;
+                collaborators[existingIndex] = newCollaborator;
             } else {
                 const collaboratorId = 'col_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9);
                 
-                novoColaborador = {
+                newCollaborator = {
                     id: collaboratorId,
                     name: name,
                     department: department,
@@ -3403,14 +3505,10 @@
                     updatedAt: new Date().toISOString()
                 };
                 
-                colaboradores.push(novoColaborador);
+                collaborators.push(newCollaborator);
             }
             
-            // Salvar no cache local
-            localStorage.setItem(COLLABORATORS_CACHE_KEY, JSON.stringify(colaboradores));
-            
-            // Salvar no Firebase
-            await salvarNoFirebase('colaborador', novoColaborador);
+            saveCollaboratorsToStorage(collaborators);
             
             closeModal();
             updateCollaboratorSelect();
@@ -3625,17 +3723,13 @@
             document.getElementById('deleteCollaboratorModal').classList.add('active');
         }
         
-        async function confirmDeleteCollaborator() {
+        function confirmDeleteCollaborator() {
             const id = document.getElementById('deleteCollaboratorModal').dataset.id;
             
-            let colaboradores = getCollaborators();
-            const filteredCollaborators = colaboradores.filter(c => c.id !== id);
+            const collaborators = getCollaborators();
+            const filteredCollaborators = collaborators.filter(c => c.id !== id);
             
-            // Atualizar cache local
-            localStorage.setItem(COLLABORATORS_CACHE_KEY, JSON.stringify(filteredCollaborators));
-            
-            // Deletar do Firebase
-            await salvarNoFirebase('delete_colaborador', id);
+            saveCollaboratorsToStorage(filteredCollaborators);
             
             closeDeleteCollaboratorModal();
             updateCollaboratorSelect();
@@ -3650,27 +3744,23 @@
             document.getElementById('deleteCollaboratorModal').dataset.id = '';
         }
         
-        async function reactivateCollaborator(id) {
+        function reactivateCollaborator(id) {
             if (!confirm('Tem certeza que deseja reativar este colaborador?')) {
                 return;
             }
             
-            let colaboradores = getCollaborators();
-            const collaboratorIndex = colaboradores.findIndex(c => c.id === id);
+            const collaborators = getCollaborators();
+            const collaboratorIndex = collaborators.findIndex(c => c.id === id);
             
             if (collaboratorIndex === -1) {
                 alert('Colaborador não encontrado!');
                 return;
             }
             
-            colaboradores[collaboratorIndex].active = true;
-            colaboradores[collaboratorIndex].updatedAt = new Date().toISOString();
+            collaborators[collaboratorIndex].active = true;
+            collaborators[collaboratorIndex].updatedAt = new Date().toISOString();
             
-            // Atualizar cache local
-            localStorage.setItem(COLLABORATORS_CACHE_KEY, JSON.stringify(colaboradores));
-            
-            // Salvar no Firebase
-            await salvarNoFirebase('colaborador', colaboradores[collaboratorIndex]);
+            saveCollaboratorsToStorage(collaborators);
             
             updateCollaboratorSelect();
             renderCollaboratorsTable(currentCollaboratorStatus);
@@ -3713,7 +3803,7 @@
         // SISTEMA DE HISTÓRICO DE CÁLCULOS
         // ============================================
         
-        async function saveCurrentCalculation() {
+        function saveCurrentCalculation() {
             const selectedCollaboratorId = document.getElementById('collaboratorSelect').value;
             
             if (!selectedCollaboratorId) {
@@ -3731,6 +3821,14 @@
             
             const isEditing = currentCalculationDetailId !== null;
             const mesReferencia = document.getElementById('mesReferencia').value;
+            
+            if (!isEditing && checkDuplicateCalculation(selectedCollaboratorId, mesReferencia)) {
+                showDuplicateNotification(`Já existe um cálculo salvo para ${collaborator.name} no mês ${mesReferencia}.`);
+                
+                if (!confirm('Já existe um cálculo para este colaborador neste mês. Deseja salvar mesmo assim?')) {
+                    return;
+                }
+            }
             
             const calculationData = {
                 id: isEditing ? currentCalculationDetailId : 'calc_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9),
@@ -3778,7 +3876,7 @@
                 }
             };
             
-            let calculations = getSavedCalculations();
+            const calculations = getSavedCalculations();
             
             if (isEditing) {
                 const calculationIndex = calculations.findIndex(c => c.id === currentCalculationDetailId);
@@ -3797,11 +3895,7 @@
                 alert(`Cálculo para ${collaborator.name} salvo com sucesso!`);
             }
             
-            // Salvar no cache local
-            localStorage.setItem(CALCULATIONS_CACHE_KEY, JSON.stringify(calculations));
-            
-            // Salvar no Firebase
-            await salvarNoFirebase('calculo', calculationData);
+            saveCalculationsToStorage(calculations);
             
             if (document.getElementById('historyContent').classList.contains('hidden') === false) {
                 renderHistoryTable();
@@ -3897,20 +3991,15 @@
             });
         }
         
-        async function deleteCalculation(id) {
+        function deleteCalculation(id) {
             if (!confirm('Tem certeza que deseja excluir este cálculo do histórico?')) {
                 return;
             }
             
-            let calculations = getSavedCalculations();
+            const calculations = getSavedCalculations();
             const filteredCalculations = calculations.filter(c => c.id !== id);
             
-            // Atualizar cache local
-            localStorage.setItem(CALCULATIONS_CACHE_KEY, JSON.stringify(filteredCalculations));
-            
-            // Deletar do Firebase
-            await salvarNoFirebase('delete_calculo', id);
-            
+            saveCalculationsToStorage(filteredCalculations);
             renderHistoryTable();
             alert('Cálculo excluído do histórico com sucesso!');
         }
@@ -3951,7 +4040,7 @@
                             </div>
                             <div>
                                 <span class="text-sm text-gray-600">Status:</span>
-                                <p class="font-medium">Salvo na nuvem</p>
+                                <p class="font-medium">Sincronizado</p>
                             </div>
                         </div>
                     </div>
@@ -4155,7 +4244,7 @@
             document.getElementById('editButtonsContainer').classList.remove('hidden');
         }
         
-        async function saveDetailEdit() {
+        function saveDetailEdit() {
             if (!currentCalculationDetailId) {
                 alert('Erro: Nenhum cálculo selecionado para edição.');
                 return;
@@ -4180,7 +4269,7 @@
                 return;
             }
             
-            let calculations = getSavedCalculations();
+            const calculations = getSavedCalculations();
             const calculationIndex = calculations.findIndex(c => c.id === currentCalculationDetailId);
             
             if (calculationIndex === -1) {
@@ -4210,13 +4299,28 @@
                 }
             };
             
+            const salarioBaseFloat = parseFloat(updatedData.salarioBase.replace(/\./g, '').replace(',', '.'));
+            const diasAtestadoInt = parseInt(updatedData.diasAtestado) || 0;
+            const diasTrabalhadosAjustados = Math.max(0, 30 - diasAtestadoInt);
+            
+            if (salarioBaseFloat > 0 && updatedData.usaPericulosidade) {
+                const periculosidadeMensal = salarioBaseFloat * 0.30;
+                const periculosidadeProRata = (periculosidadeMensal / 30) * diasTrabalhadosAjustados;
+                
+                updatedCalculation.data.resultados = {
+                    ...updatedCalculation.data.resultados,
+                    valorPericulosidade: R$.format(periculosidadeProRata)
+                };
+            }
+            
+            if (checkDuplicateCalculation(originalCalculation.collaboratorId, updatedData.mesReferencia, currentCalculationDetailId)) {
+                if (!confirm('Já existe outro cálculo para este colaborador neste mês. Deseja salvar mesmo assim?')) {
+                    return;
+                }
+            }
+            
             calculations[calculationIndex] = updatedCalculation;
-            
-            // Salvar no cache local
-            localStorage.setItem(CALCULATIONS_CACHE_KEY, JSON.stringify(calculations));
-            
-            // Salvar no Firebase
-            await salvarNoFirebase('calculo', updatedCalculation);
+            saveCalculationsToStorage(calculations);
             
             alert(`Cálculo atualizado com sucesso!`);
             
@@ -4237,7 +4341,7 @@
         // FUNÇÕES DE DEPARTAMENTOS
         // ============================================
         
-        async function saveNewDepartment(event) {
+        function saveNewDepartment(event) {
             event.preventDefault();
             
             const name = document.getElementById('departmentName').value.trim();
@@ -4248,8 +4352,8 @@
                 return;
             }
             
-            let departamentos = getDepartments();
-            const existingDepartment = departamentos.find(dept => 
+            const departments = getDepartments();
+            const existingDepartment = departments.find(dept => 
                 dept.name.toLowerCase() === name.toLowerCase()
             );
             
@@ -4258,26 +4362,29 @@
                 return;
             }
             
-            let novoDepartamento;
+            let newDepartment;
             
             if (window.editingDepartmentId) {
-                novoDepartamento = {
+                newDepartment = {
                     id: window.editingDepartmentId,
                     name: name,
                     active: active,
                     updatedAt: new Date().toISOString()
                 };
                 
-                const originalDepartment = departamentos.find(dept => dept.id === window.editingDepartmentId);
+                const originalDepartment = departments.find(dept => dept.id === window.editingDepartmentId);
                 if (originalDepartment) {
-                    novoDepartamento.createdAt = originalDepartment.createdAt;
+                    newDepartment.createdAt = originalDepartment.createdAt;
                 }
                 
-                departamentos = departamentos.map(dept => 
-                    dept.id === window.editingDepartmentId ? novoDepartamento : dept
+                const updatedDepartments = departments.map(dept => 
+                    dept.id === window.editingDepartmentId ? newDepartment : dept
                 );
+                
+                saveDepartmentsToStorage(updatedDepartments);
+                window.editingDepartmentId = null;
             } else {
-                novoDepartamento = {
+                newDepartment = {
                     id: 'dept_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9),
                     name: name,
                     active: active,
@@ -4285,14 +4392,9 @@
                     updatedAt: new Date().toISOString()
                 };
                 
-                departamentos.push(novoDepartamento);
+                departments.push(newDepartment);
+                saveDepartmentsToStorage(departments);
             }
-            
-            // Salvar no cache local
-            localStorage.setItem(DEPARTMENTS_CACHE_KEY, JSON.stringify(departamentos));
-            
-            // Salvar no Firebase
-            await salvarNoFirebase('departamento', novoDepartamento);
             
             closeDepartmentModal();
             updateDepartmentSelect();
@@ -4325,7 +4427,7 @@
             openDepartmentModal();
         }
         
-        async function deleteDepartment(id) {
+        function deleteDepartment(id) {
             const departments = getDepartments();
             const department = departments.find(dept => dept.id === id);
             
@@ -4352,31 +4454,16 @@
             const filteredDepartments = departments.filter(dept => dept.id !== id);
             
             if (collaboratorsInDepartment.length > 0) {
-                let colaboradores = getCollaborators();
-                const updatedCollaborators = colaboradores.map(collaborator => {
+                const updatedCollaborators = collaborators.map(collaborator => {
                     if (collaborator.department === department.name) {
-                        collaborator.department = '';
-                        return collaborator;
+                        return { ...collaborator, department: '' };
                     }
                     return collaborator;
                 });
-                
-                // Atualizar cache local
-                localStorage.setItem(COLLABORATORS_CACHE_KEY, JSON.stringify(updatedCollaborators));
-                
-                // Salvar cada colaborador atualizado no Firebase
-                for (let collab of updatedCollaborators) {
-                    if (collab.department === '') {
-                        await salvarNoFirebase('colaborador', collab);
-                    }
-                }
+                saveCollaboratorsToStorage(updatedCollaborators);
             }
             
-            // Atualizar cache local de departamentos
-            localStorage.setItem(DEPARTMENTS_CACHE_KEY, JSON.stringify(filteredDepartments));
-            
-            // Deletar departamento do Firebase
-            await salvarNoFirebase('delete_departamento', id);
+            saveDepartmentsToStorage(filteredDepartments);
             
             updateDepartmentSelect();
             renderDepartmentsTable();
@@ -4992,111 +5079,24 @@
         }
 
         // ============================================
-        // FUNÇÕES DE CONFIGURAÇÕES
-        // ============================================
-        
-        function loadSettings() {
-            const savedSettings = localStorage.getItem(SETTINGS_STORAGE_KEY);
-            
-            if (savedSettings) {
-                try {
-                    const settings = JSON.parse(savedSettings);
-                    heNormalPorcentagem = settings.heNormalPorcentagem || 50;
-                    heSobreavisoPorcentagem = settings.heSobreavisoPorcentagem || 50;
-                    adicionalNoturnoPorcentagem = settings.adicionalNoturnoPorcentagem || 20;
-                } catch (e) {
-                    console.error("Erro ao carregar configurações:", e);
-                }
-            }
-            
-            const heNormalInput = document.getElementById('heNormalPorcentagem');
-            const heSobreavisoInput = document.getElementById('heSobreavisoPorcentagem');
-            const adicionalNoturnoInput = document.getElementById('adicionalNoturnoPorcentagem');
-            
-            if (heNormalInput) heNormalInput.value = heNormalPorcentagem;
-            if (heSobreavisoInput) heSobreavisoInput.value = heSobreavisoPorcentagem;
-            if (adicionalNoturnoInput) adicionalNoturnoInput.value = adicionalNoturnoPorcentagem;
-            
-            updatePercentageDisplays();
-        }
-        
-        function saveSettings() {
-            const heNormalInput = document.getElementById('heNormalPorcentagem');
-            const heSobreavisoInput = document.getElementById('heSobreavisoPorcentagem');
-            const adicionalNoturnoInput = document.getElementById('adicionalNoturnoPorcentagem');
-            
-            heNormalPorcentagem = parseInt(heNormalInput.value) || 50;
-            heSobreavisoPorcentagem = parseInt(heSobreavisoInput.value) || 50;
-            adicionalNoturnoPorcentagem = parseInt(adicionalNoturnoInput.value) || 20;
-            
-            const settings = {
-                heNormalPorcentagem,
-                heSobreavisoPorcentagem,
-                adicionalNoturnoPorcentagem,
-                updatedAt: new Date().toISOString()
-            };
-            
-            localStorage.setItem(SETTINGS_STORAGE_KEY, JSON.stringify(settings));
-            
-            updatePercentageDisplays();
-            calcular();
-            
-            alert('Configurações salvas com sucesso!');
-            closeSettingsModal();
-        }
-        
-        function updatePercentageDisplays() {
-            const displays = [
-                'heNormalPorcentagemDisplay',
-                'heSobreavisoPorcentagemDisplay',
-                'adicionalNoturnoPorcentagemDisplay',
-                'heNormalPorcentagemReflexoDisplay',
-                'heSobreavisoPorcentagemReflexoDisplay',
-                'adicionalNoturnoPorcentagemReflexoDisplay',
-                'heNormalPorcentagemBaseDisplay'
-            ];
-            
-            displays.forEach(id => {
-                const element = document.getElementById(id);
-                if (element) {
-                    if (id.includes('Normal')) {
-                        element.textContent = heNormalPorcentagem;
-                    } else if (id.includes('Sobreaviso')) {
-                        element.textContent = heSobreavisoPorcentagem;
-                    } else if (id.includes('Noturno')) {
-                        element.textContent = adicionalNoturnoPorcentagem;
-                    }
-                }
-            });
-        }
-        
-        function openSettingsModal() {
-            document.getElementById('settingsModal').classList.add('active');
-        }
-        
-        function closeSettingsModal() {
-            document.getElementById('settingsModal').classList.remove('active');
-        }
-
-        // ============================================
         // INICIALIZAÇÃO
         // ============================================
         
         document.addEventListener('DOMContentLoaded', () => {
-            console.log("🚀 Aplicação inicializada - Modo Compartilhado");
-            
-            const R$ = new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' });
+            console.log("🚀 Aplicação inicializada com compartilhamento de dados");
             
             // Verifica se já existe uma sessão salva
             if (checkSavedAuth()) {
+                // Se já estiver autenticado, mostra o app
                 document.getElementById('loginModal').style.display = 'none';
                 document.getElementById('appContainer').style.display = 'flex';
                 
-                // Carregar dados do Firebase
+                // Carregar dados compartilhados do Firebase
                 setTimeout(() => {
-                    carregarDadosDoFirebase();
+                    loadDataFromFirebase();
                 }, 500);
             } else {
+                // Mostra o modal de login
                 document.getElementById('loginModal').style.display = 'flex';
                 document.getElementById('appContainer').style.display = 'none';
             }
@@ -5437,6 +5437,7 @@
             // Eventos de login
             document.getElementById('btnLogin').addEventListener('click', handleLogin);
             
+            // Permitir login com Enter
             document.getElementById('loginPassword').addEventListener('keypress', (e) => {
                 if (e.key === 'Enter') {
                     e.preventDefault();
@@ -5451,6 +5452,7 @@
                 }
             });
             
+            // Enter nos modais de troca de senha
             document.getElementById('currentPassword').addEventListener('keypress', (e) => {
                 if (e.key === 'Enter') {
                     e.preventDefault();
